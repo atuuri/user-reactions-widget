@@ -10,9 +10,9 @@ The value is the context, not the buttons. Every rating carries `surface`, `subj
 ## Element
 
 ```html
-<script src="https://cdn.example.com/insight-feedback.js" defer></script>
+<script src="https://cdn.example.com/user-reactions.js" defer></script>
 
-<insight-feedback
+<user-reactions
   project-key="pk_live_xxx"
   type="thumbs"
   surface="assistant-answer"
@@ -20,10 +20,10 @@ The value is the context, not the buttons. Every rating carries `surface`, `subj
   meta='{"model":"gpt-x","release":"2026.11.2"}'
   comment="on-negative"
   lang="fi">
-</insight-feedback>
+</user-reactions>
 ```
 
-The tag name `insight-feedback` is a placeholder until the product is named.
+The tag name `user-reactions` matches the repo name.
 
 ### Attributes
 
@@ -75,9 +75,9 @@ Native-speaker review of fi/sv strings before first pilot.
 
 | Event | `detail` |
 |---|---|
-| `insight-feedback:rated` | `{ id, type, score, surface, subject }` |
-| `insight-feedback:commented` | `{ id, comment }` |
-| `insight-feedback:error` | `{ code, message }` |
+| `user-reactions:rated` | `{ id, type, score, surface, subject }` |
+| `user-reactions:commented` | `{ id, comment }` |
+| `user-reactions:error` | `{ code, message }` |
 
 Host apps (including AI chat UIs) use these to react, e.g. offer a regenerate button after a thumbs-down.
 
@@ -86,7 +86,7 @@ Host apps (including AI chat UIs) use these to react, e.g. offer a regenerate bu
 For surfaces that cannot render the element (native mobile, server-side, MCP Apps / chat-host UIs), export a tiny function from the ES module:
 
 ```ts
-import { sendFeedback } from "insight-feedback";
+import { sendFeedback } from "user-reactions";
 await sendFeedback({ projectKey, type: "thumbs", score: 0, surface, subject, meta, comment });
 ```
 
@@ -94,7 +94,7 @@ Same payload and endpoint as the element.
 
 ## Styling
 
-- CSS custom properties: `--if-font`, `--if-text`, `--if-muted`, `--if-accent`, `--if-bg`, `--if-radius`, `--if-gap`.
+- CSS custom properties: `--ur-font`, `--ur-text`, `--ur-muted`, `--ur-accent`, `--ur-bg`, `--ur-radius`, `--ur-gap`.
 - Parts: `question`, `button`, `button-selected`, `comment`, `send`, `thanks`.
 - Inherit font by default; looks native in light and dark host pages.
 - Compact by default (one line for thumbs).
@@ -122,7 +122,7 @@ Same payload and endpoint as the element.
 - Thumbs down with `comment="on-negative"` shows the comment box; thumbs up does not.
 - Changing the rating re-sends with the same `id`.
 - Exactly one impression per element instance.
-- Network failure fires `insight-feedback:error` and does not throw.
+- Network failure fires `user-reactions:error` and does not throw.
 - IIFE bundle ≤ 8 kB min+gzip.
 - Tests cover payload shape against `docs/api/openapi.yaml` examples.
 
