@@ -1,0 +1,125 @@
+openapi: 3.1.0
+info:
+  title: Feedback ingest API
+  version: 0.1.0
+  description: >
+    Public, write-only API used by the widget and the headless client.
+    Authenticated with a public project key. Must allow CORS from any origin.
+servers:
+  - url: https://api.example.com
+    description: Hosted (placeholder)
+  - url: http://localhost:5173/mock
+    description: Dev mock served by `npm run dev`
+security:
+  - projectKey: []
+paths:
+  /v1/feedback:
+    post:
+      summary: Create or update a feedback item (upsert by id)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Feedback"
+            examples:
+              thumbsDown:
+                value:
+                  id: 0b8f6c1e-6f4e-4c55-9a0e-2a7f1c9d3b11
+                  type: thumbs
+                  score: 0
+                  surface: assistant-answer
+                  subject: msg_8f2c
+                  meta: { model: gpt-x, release: "2026.11.2" }
+                  comment: The answer ignored my order number.
+                  locale: fi
+                  client: widget@0.1.0
+              ces:
+                value:
+                  id: 5d2a9a40-1c3e-4f8b-8b7e-77f0a2c4e901
+                  type: ces
+                  score: 6
+                  surface: checkout
+                  locale: en
+                  client: widget@0.1.0
+      responses:
+        "202":
+          description: Accepted
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id: { type: string, format: uuid }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+  /v1/impressions:
+    post:
+      summary: Record that a feedback element was seen
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/Impression"
+            examples:
+              basic:
+                value:
+                  type: thumbs
+                  surface: assistant-answer
+                  subject: msg_8f2c
+                  client: widget@0.1.0
+      responses:
+        "202": { description: Accepted }
+        "400": { $ref: "#/components/responses/Invalid" }
+        "401": { $ref: "#/components/responses/Unauthorized" }
+components:
+  securitySchemes:
+    projectKey:
+      type: apiKey
+      in: header
+      name: X-Project-Key
+  schemas:
+    Feedback:
+      type: object
+      additionalProperties: false
+      required: [id, type, score, surface]
+      properties:
+        id:
+          type: string
+          format: uuid
+          description: Client-generated. Re-posting the same id updates the item.
+        type:
+          type: string
+          enum: [thumbs, csat, ces]
+        score:
+          type: integer
+          description: thumbs 0–1, csat 1–5, ces 1–7. Server validates range per type.
+          minimum: 0
+          maximum: 7
+        surface: { type: string, minLength: 1, maxLength: 100 }
+        subject: { type: string, maxLength: 200 }
+        meta:
+          type: object
+          maxProperties: 20
+          additionalProperties: { type: string, maxLength: 200 }
+        comment: { type: string, maxLength: 2000 }
+        locale: { type: string, maxLength: 10 }
+        client: { type: string, maxLength: 50, description: "e.g. widget@0.1.0" }
+    Impression:
+      type: object
+      additionalProperties: false
+      required: [type, surface]
+      properties:
+        type:
+          type: string
+          enum: [thumbs, csat, ces]
+        surface: { type: string, minLength: 1, maxLength: 100 }
+        subject: { type: string, maxLength: 200 }
+        client: { type: string, maxLength: 50 }
+  responses:
+    Invalid:
+      description: Payload failed validation
+    Unauthorized:
+      description: Missing or unknown project key
