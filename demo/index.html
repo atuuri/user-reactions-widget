@@ -36,7 +36,19 @@
       header label { margin-left: auto; font-size: 14px; display: flex; gap: 6px; align-items: center; }
       main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 16px; padding: 16px; max-width: 1200px; margin: 0 auto; }
       @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
+      .examples { display: flex; flex-direction: column; gap: 32px; min-width: 0; }
+      h2.example { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
       .chat { display: flex; flex-direction: column; gap: 12px; }
+      .kb { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px 28px; max-width: 46em; font-family: Georgia, 'Iowan Old Style', serif; font-size: 16px; line-height: 1.65; }
+      .kb h1 { font-size: 26px; line-height: 1.25; margin: 6px 0 4px; }
+      .kb h3 { font-size: 18px; margin: 22px 0 6px; }
+      .kb p, .kb ol { margin: 0 0 12px; }
+      .kb li { margin-bottom: 4px; }
+      .kb .crumbs, .kb .updated { font: 13px system-ui, sans-serif; color: var(--muted); margin: 0; }
+      .kb .updated { margin-bottom: 16px; }
+      .kb user-reactions { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); font: 14px system-ui, sans-serif; --ur-accent: var(--accent); --ur-gap: .6em; }
+      .kb .support { font: 14px system-ui, sans-serif; margin: 12px 0 0; }
+      .kb .support a { color: var(--accent); }
       .msg { padding: 12px 14px; border-radius: 12px; max-width: 46em; }
       .user { align-self: flex-end; background: var(--accent); color: #fff; }
       .assistant { background: var(--card); border: 1px solid var(--line); }
@@ -60,11 +72,47 @@
   <body>
     <header>
       <h1>&lt;user-reactions&gt; demo</h1>
-      <p>Fake AI chat. Each answer has a thumbs widget (comment on thumbs down). Scroll to trigger impressions.</p>
+      <p>Thumbs widgets under fake AI chat answers and at the end of a help article (comment on thumbs down). Scroll to trigger impressions.</p>
       <label><input type="checkbox" id="outage" /> Simulate API outage (503)</label>
     </header>
     <main>
-      <section class="chat" id="chat" aria-label="Conversation"></section>
+      <div class="examples">
+        <section aria-labelledby="h-chat">
+          <h2 class="example" id="h-chat">AI chat answers</h2>
+          <div class="chat" id="chat" role="log" aria-label="Conversation"></div>
+        </section>
+
+        <section aria-labelledby="h-kb">
+          <h2 class="example" id="h-kb">Knowledge base article</h2>
+          <article class="kb">
+            <nav class="crumbs" aria-label="Breadcrumb">Help centre › Account › Security</nav>
+            <h1>Reset your password</h1>
+            <p class="updated">Updated 4 November 2026 · 3 min read</p>
+            <p>If you have forgotten your password or think someone else knows it, you can set a new one at any time. Resetting signs you out on every device except the one you are using.</p>
+            <h3>Reset from the sign-in page</h3>
+            <ol>
+              <li>Go to the sign-in page and choose <strong>Forgot password?</strong></li>
+              <li>Enter the email address you use for your account.</li>
+              <li>Open the email we send you and select <strong>Reset password</strong>. The link is valid for 30 minutes.</li>
+              <li>Choose a new password of at least 12 characters and save it.</li>
+            </ol>
+            <h3>Reset while signed in</h3>
+            <p>Open <strong>Settings → Security</strong>, choose <strong>Change password</strong>, enter your current password and then the new one.</p>
+            <h3>Didn't get the email?</h3>
+            <p>Check your spam folder and make sure the address is spelled correctly. Emails can take a few minutes to arrive. If you signed up with Google or Apple, sign in with that provider instead; there is no separate password to reset.</p>
+
+            <user-reactions
+              project-key="pk_demo_local"
+              type="thumbs"
+              surface="help-article"
+              subject="kb_reset-password"
+              meta='{"locale_site":"en-gb","article_version":"7"}'
+              question="Was this article helpful?"
+              comment="on-negative"
+              endpoint="/mock"></user-reactions>
+          </article>
+        </section>
+      </div>
       <aside aria-label="Request and event log">
         <h2>Mock API and events <button type="button" id="clear">Clear</button></h2>
         <ul id="log"></ul>

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: MIT
-// Demo host page logic: renders a fake chat, reacts to widget events and shows mock API traffic.
+// Demo host page logic: renders a fake chat, reacts to widget events (chat and help article)
+// and shows mock API traffic.
 
 const QA: [string, string][] = [
   ['How do I reset my password?', 'Open Settings → Security and choose “Reset password”. We email you a link that is valid for 30 minutes.'],
@@ -64,23 +65,35 @@ more.onclick = () => addTurn(EXTRA);
 chat.append(more);
 QA.forEach(addTurn);
 
-outage.onchange = () => {
+// Browsers may restore the checkbox on reload, so sync every widget (including the
+// static one in the article) now and on change.
+const syncEndpoint = () => {
   for (const w of document.querySelectorAll('user-reactions')) w.setAttribute('endpoint', endpoint());
 };
+outage.onchange = syncEndpoint;
+syncEndpoint();
 document.getElementById('clear')!.onclick = () => (log.textContent = '');
 
-// Host reactions to widget events.
+// Host reactions to widget events: after a thumbs down, the chat offers a new answer
+// and the help article offers a way to contact support.
 document.addEventListener('user-reactions:rated', (e) => {
   const d = (e as CustomEvent).detail;
   entry('ev', `event rated  score=${d.score} subject=${d.subject}`, d);
-  const msg = (e.target as HTMLElement).closest('.assistant')!;
-  msg.querySelector('.regen')?.remove();
-  if (d.score === 0) {
+  const host = (e.target as HTMLElement).closest('.assistant, .kb');
+  if (!host) return;
+  host.querySelector('.regen, .support')?.remove();
+  if (d.score !== 0) return;
+  if (host.matches('.assistant')) {
     const regen = document.createElement('button');
     regen.className = 'regen';
     regen.textContent = '↻ Try a different answer';
     regen.onclick = () => regen.replaceWith('(The host app would regenerate the answer here.)');
-    msg.append(regen);
+    host.append(regen);
+  } else {
+    const p = document.createElement('p');
+    p.className = 'support';
+    p.innerHTML = 'Still stuck? <a href="#" onclick="return false">Contact support</a> and we will help you reset it.';
+    host.append(p);
   }
 });
 document.addEventListener('user-reactions:commented', (e) => entry('ev', 'event commented', (e as CustomEvent).detail));
