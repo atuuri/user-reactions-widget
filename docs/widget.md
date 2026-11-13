@@ -67,8 +67,8 @@ Native-speaker review of fi/sv strings before first pilot.
 3. **Rate**: on click, mark the button as selected and immediately `POST /v1/feedback` with a client-generated UUID `id`.
 4. **Change rating**: clicking another button re-sends with the **same `id`** (server upserts). Allowed until a comment is sent.
 5. **Comment** (if enabled for that score): show textarea (max 2000 chars) and Send. Send re-posts the same `id` with `comment`. Then show the thanks state.
-6. **Thanks**: if no comment box applies, show thanks right after rating.
-7. **Failure**: retry once after 1 s; if it still fails, fire `error` and keep the UI usable. Never throw into the host page.
+6. **Thanks**: if no comment box applies, show thanks right after rating. The buttons stay usable, so the rating can still change. Once a comment is sent, the buttons are locked (`aria-disabled`). Send with an empty box just shows thanks.
+7. **Failure**: on a network error, HTTP 429 or 5xx, retry once after 1 s; a 4xx (bad payload, unknown key) is not retried. If it still fails, fire `error` and keep the UI usable: the user can click again, and a failed comment keeps its text. Never throw into the host page.
 8. **Attribute changes**: changing `subject` or `meta` after render resets the element (new instance, new id). Needed for chat UIs that reuse nodes.
 
 ## Events (CustomEvent, bubbles, composed)
@@ -78,6 +78,20 @@ Native-speaker review of fi/sv strings before first pilot.
 | `user-reactions:rated` | `{ id, type, score, surface, subject }` |
 | `user-reactions:commented` | `{ id, comment }` |
 | `user-reactions:error` | `{ code, message }` |
+
+`rated` fires when the user selects a score, before the request completes, so the host can react immediately. `commented` fires once the API has accepted the comment.
+
+Error codes:
+
+| `code` | When |
+|---|---|
+| `invalid-attribute` | `project-key` or `surface` missing, `surface`/`subject` too long, or `type` not supported. Nothing is rendered. |
+| `invalid-meta` | `meta` is not a JSON object of ≤ 20 string values (≤ 200 chars). `meta` is ignored; the element still works. |
+| `network` | The request could not be made (offline, DNS, CORS), after the retry. |
+| `http` | The API answered with a non-2xx status (after the retry for 429/5xx). `message` includes the status. |
+| `internal` | Unexpected exception inside the element. |
+
+Configuration errors are dispatched in a microtask, so listeners added right after inserting the element still receive them.
 
 Host apps (including AI chat UIs) use these to react, e.g. offer a regenerate button after a thumbs-down.
 
@@ -90,7 +104,7 @@ import { sendFeedback } from "user-reactions";
 await sendFeedback({ projectKey, type: "thumbs", score: 0, surface, subject, meta, comment });
 ```
 
-Same payload and endpoint as the element.
+Same payload and endpoint as the element, with `client: "headless@<version>"` instead of `widget@<version>`. Optional `id` (to update an earlier item) and `endpoint`. Resolves with `{ id }`; rejects with a `ReactionsError` (`code` as in the error table, plus `status` for `http`) after the same retry rule. Importing the module outside a browser does not register the element.
 
 ## Styling
 
@@ -108,11 +122,12 @@ Same payload and endpoint as the element.
 
 ## Dev setup
 
-- `npm run dev` serves `demo/index.html` with three examples (thumbs in a fake chat list, CSAT, CES) and a mock endpoint that logs payloads to the console and the page.
+- `npm run dev` serves `demo/index.html` with four examples (thumbs in a fake chat list, thumbs at the end of a knowledge-base article, CSAT, CES) and a mock endpoint that logs payloads to the console and the page.
+- Mock endpoint: `POST /mock/v1/feedback` and `/mock/v1/impressions` answer 202, or 400 if the body breaks `docs/api/openapi.yaml`. `/mock/fail/v1/*` answers 503 to exercise the retry and error path. M1 ships the thumbs example only; CSAT and CES examples arrive with M2.
 
 ## Milestones
 
-1. **M1 Thumbs**: element with `thumbs`, impressions, comment modes, events, headless client, demo page, tests, size check, README.
+1. **M1 Thumbs**: element with `thumbs`, impressions, comment modes, events, headless client, demo page, tests, size check, README. English strings only; other `type` values fire `invalid-attribute` until M2.
 2. **M2 Scales**: `csat` and `ces`, keyboard navigation for scales, fi/sv strings.
 3. **M3 Polish**: dark-mode check, reduced motion, attribute-reset behaviour, publish to npm as 0.1.0.
 
