@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: MIT
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../src/index';
+import { VERSION } from '../src/client';
 import { validateRequest } from '../tools/openapi';
 import { FakeIO, comment, flush, mount, mockFetch } from './helpers';
 
@@ -79,7 +80,7 @@ describe('impressions', () => {
 
     const [imp] = net.impressions();
     expect(imp.url).toBe('https://api.test/v1/impressions');
-    expect(imp.body).toEqual({ type: 'thumbs', surface: 'assistant-answer', subject: 'msg_1', client: 'widget@0.1.0' });
+    expect(imp.body).toEqual({ type: 'thumbs', surface: 'assistant-answer', subject: 'msg_1', client: `widget@${VERSION}` });
     expect(validateRequest('/v1/impressions', imp.body)).toEqual([]);
   });
 
@@ -125,7 +126,7 @@ describe('rating', () => {
     expect(f.headers['Content-Type']).toBe('application/json');
     expect(f.credentials).toBe('omit');
     expect(f.body.id).toMatch(UUID);
-    expect(f.body).toMatchObject({ type: 'thumbs', score: 1, surface: 'assistant-answer', subject: 'msg_8f2c', locale: 'en', client: 'widget@0.1.0' });
+    expect(f.body).toMatchObject({ type: 'thumbs', score: 1, surface: 'assistant-answer', subject: 'msg_8f2c', locale: 'en', client: `widget@${VERSION}` });
     expect(validateRequest('/v1/feedback', f.body)).toEqual([]);
   });
 

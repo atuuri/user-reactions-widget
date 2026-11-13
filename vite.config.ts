@@ -2,7 +2,10 @@
 import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Plugin } from 'vite';
 import { defineConfig } from 'vitest/config';
+import { readFileSync } from 'node:fs';
 import { validateRequest } from './tools/openapi.ts';
+
+const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
 
 /**
  * Dev mock of the ingest API (see `servers` in docs/api/openapi.yaml):
@@ -55,6 +58,8 @@ function mockApi(): Plugin {
 
 export default defineConfig({
   plugins: [mockApi()],
+  // Single source of the version: package.json (bumped by `npm version`).
+  define: { __UR_VERSION__: JSON.stringify(pkg.version) },
   publicDir: false,
   server: { port: 5173 },
   build: {

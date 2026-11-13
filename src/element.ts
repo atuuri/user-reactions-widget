@@ -2,8 +2,8 @@
 // <user-reactions> web component. Every entry point is guarded: errors surface only
 // as `user-reactions:error` events and never reach the host page.
 
-import { type ErrorCode, type FeedbackPayload, type FeedbackType, type Meta, VERSION, clean, post, uuid } from './client';
-import { type Strings, strings } from './strings';
+import { type ErrorCode, type FeedbackPayload, type FeedbackType, type Meta, VERSION, clean, post, uuid } from './client.js';
+import { type Strings, strings } from './strings.js';
 
 export const TAG = 'user-reactions';
 

@@ -7,6 +7,7 @@ import { join } from 'node:path';
 import { Window } from 'happy-dom';
 import { build } from 'vite';
 import { afterAll, beforeAll, expect, it, vi } from 'vitest';
+import { VERSION } from '../src/client';
 
 let dir: string;
 let iife: string;
@@ -53,7 +54,7 @@ it.each([
   expect(sr.querySelector('form')!.hidden).toBe(false);
   expect(posts).toHaveLength(1);
   expect(posts[0].url).toBe('https://api.example.com/v1/feedback');
-  expect(posts[0].body).toMatchObject({ type: 'thumbs', score: 0, surface: 'checkout', client: 'widget@0.1.0' });
+  expect(posts[0].body).toMatchObject({ type: 'thumbs', score: 0, surface: 'checkout', client: `widget@${VERSION}` });
 
   expect(errors).toEqual([]);
   await window.happyDOM.close();
