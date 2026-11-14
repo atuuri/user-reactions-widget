@@ -123,7 +123,8 @@ Same payload and endpoint as the element, with `client: "headless@<version>"` in
 ## Dev setup
 
 - `npm run dev` serves `demo/index.html` with four examples (thumbs in a fake chat list, thumbs at the end of a knowledge-base article, CSAT, CES) and a mock endpoint that logs payloads to the console and the page.
-- Mock endpoint: `POST /mock/v1/feedback` and `/mock/v1/impressions` answer 202, or 400 if the body breaks `docs/api/openapi.yaml`. `/mock/fail/v1/*` answers 503 to exercise the retry and error path. M1 ships the thumbs example only; CSAT and CES examples arrive with M2.
+- Mock endpoint: `POST /mock/v1/feedback` and `/mock/v1/impressions` answer 202, or 400 if the body breaks `docs/api/openapi.yaml`. `/mock/fail/v1/*` answers 503 to exercise the retry and error path.
+- `demo/embed.html` loads the built `dist/user-reactions.js` with one script tag on a plain page (run `npm run build` first). M1 ships the thumbs example only; CSAT and CES examples arrive with M2.
 
 ## Milestones
 

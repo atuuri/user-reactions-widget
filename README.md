@@ -90,11 +90,12 @@ user-reactions::part(button-selected) { background: #2563eb22; }
 
 ## Development
 
-Requires Node 22.12+ for development (Vitest 5).
+Requires Node 22.12+ for development (Vitest 5); `nvm use` picks it up from `.nvmrc`.
 
 ```sh
 npm install
 npm run dev     # demo at http://localhost:5173/demo/ with a mock API that logs payloads
+                # after npm run build: /demo/embed.html tests the built bundle on a plain page
 npm test        # Vitest + happy-dom, payloads checked against docs/api/openapi.yaml
 npm run build   # dist/user-reactions.mjs, dist/user-reactions.js, dist/types; fails over the size budget
 npm run size    # size check of the IIFE build (≤ 8 kB min+gzip)
