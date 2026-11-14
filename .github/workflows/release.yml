@@ -28,12 +28,12 @@ jobs:
       version: ${{ steps.version.outputs.version }}
       dist-tag: ${{ steps.version.outputs.dist-tag }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
@@ -63,7 +63,7 @@ jobs:
       - run: npm run build
       - run: npm run pack:check
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: dist
           path: dist/
@@ -84,11 +84,11 @@ jobs:
       DIST_TAG: ${{ needs.verify.outputs.dist-tag }}
       TAG: ${{ github.ref_name }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
 
-      - uses: actions/setup-node@v5
+      - uses: actions/setup-node@v7
         with:
           node-version: 24
           registry-url: https://registry.npmjs.org
@@ -100,7 +100,7 @@ jobs:
             || { echo "::error::npm $(npm --version) is too old for trusted publishing"; exit 1; }
 
       - name: Use the verified build
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: dist
           path: dist
