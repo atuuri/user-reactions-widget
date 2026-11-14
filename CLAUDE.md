@@ -1,10 +1,10 @@
 # User-reactions-widget: embeddable feedback element
 
-MIT-licensed repo, private for now and to be made public later. The product has two repos:
+MIT-licensed, public repo. The product has two repos:
 - `User-reactions-widget` (this repo): the embeddable element and a tiny headless client.
-- `platform` (private for now): ingest API server and reports.
+- `platform` (private): ingest API server and reports.
 
-Never add server code, pricing, customer names, business notes or secrets to this repo: its full history will become public.
+Never add server code, pricing, customer names, business notes or secrets to this repo: it and its full history are public.
 
 ## Source of truth
 - `docs/widget.md`: behaviour, attributes, events, acceptance criteria.

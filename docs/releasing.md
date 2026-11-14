@@ -37,9 +37,9 @@ These need the maintainer's npm and GitHub accounts; they cannot be done from th
 3. **Environment** (Settings → Environments → New environment): `npm-publish`.
    - Required reviewers: the maintainer.
    - Deployment branches and tags: "Selected", add tag rule `v*`.
-4. **Ruleset for `main`** (Settings → Rules → Rulesets): require a pull request and the status checks `Test (Node 22)` and `Test (Node 24)`.
+4. **Ruleset for `main`** (Settings → Rules → Rulesets): require a pull request (0 required approvals for a single maintainer, who cannot approve their own PRs) and the status checks `Test (Node 22)` and `Test (Node 24)`.
 5. **Ruleset for tags `v*`**: restrict creation, update and deletion; bypass list: the maintainer. Without this, anyone with write access could start a release.
-6. **Make the repository public before 0.1.0.** Provenance (the npm badge proving the package was built here) only works from public repositories, the package's repository link is otherwise a 404, and Actions minutes are free for public repositories. Review the history first: commit author emails become public with it.
+6. **Keep the repository public.** Provenance (the npm badge proving the package was built here) only works from public repositories, and the package's repository link must resolve. If it were made private, releases would still publish, but without provenance.
 
 ### First publish (bootstrap)
 npm only lets you configure trusted publishing on a package that already exists, so the first release uses a short-lived token. If npm offers trusted publishing for a not-yet-published package, skip steps 7 and 9 and do step 8 first.
