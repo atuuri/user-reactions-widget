@@ -1,7 +1,9 @@
 // SPDX-License-Identifier: MIT
 // Headless client and shared transport. Safe to import outside a browser.
 
-export const VERSION = '0.1.0';
+declare const __UR_VERSION__: string; // injected from package.json by vite.config.ts
+
+export const VERSION: string = __UR_VERSION__;
 export const DEFAULT_ENDPOINT = 'https://api.example.com';
 export const RETRY_DELAY_MS = 1000;
 

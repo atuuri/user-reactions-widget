@@ -2,7 +2,7 @@
 // Payloads must match docs/api/openapi.yaml: its schemas and its request examples.
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import '../src/index';
-import { sendFeedback } from '../src/client';
+import { VERSION, sendFeedback } from '../src/client';
 import { requestBody, validateRequest } from '../tools/openapi';
 import { FakeIO, comment, flush, mount, mockFetch } from './helpers';
 
@@ -65,7 +65,9 @@ describe('payloads match the spec examples', () => {
     await flush();
     const body = net.feedback()[1].body;
     expect(validateRequest('/v1/feedback', body)).toEqual([]);
-    expect({ ...body, id: thumbsDown.id }).toEqual(thumbsDown);
+    // The examples carry widget@0.1.0; compare the rest and check the client tag separately.
+    expect(body.client).toBe(`widget@${VERSION}`);
+    expect({ ...body, id: thumbsDown.id, client: thumbsDown.client }).toEqual(thumbsDown);
   });
 
   it('element: the impression equals the basic example', async () => {
@@ -74,14 +76,16 @@ describe('payloads match the spec examples', () => {
     const m = mount({ surface: ex.surface, subject: ex.subject });
     FakeIO.show(m.el);
     await flush();
-    expect(net.impressions()[0].body).toEqual(ex);
+    const body = net.impressions()[0].body;
+    expect(body.client).toBe(`widget@${VERSION}`);
+    expect({ ...body, client: ex.client }).toEqual(ex);
   });
 
   it('sendFeedback: produces the thumbsDown example, with a headless client tag', async () => {
     const net = mockFetch();
     const { id, type, score, surface, subject, meta, comment, locale } = thumbsDown;
     await sendFeedback({ projectKey: 'pk', id, type, score, surface, subject, meta, comment, locale });
-    expect(net.calls[0].body).toEqual({ ...thumbsDown, client: 'headless@0.1.0' });
+    expect(net.calls[0].body).toEqual({ ...thumbsDown, client: `headless@${VERSION}` });
     expect(validateRequest('/v1/feedback', net.calls[0].body)).toEqual([]);
   });
 
@@ -89,6 +93,6 @@ describe('payloads match the spec examples', () => {
     const ex = feedback.examples.ces as Record<string, any>;
     const net = mockFetch();
     await sendFeedback({ projectKey: 'pk', id: ex.id, type: ex.type, score: ex.score, surface: ex.surface, locale: ex.locale });
-    expect(net.calls[0].body).toEqual({ ...ex, client: 'headless@0.1.0' });
+    expect(net.calls[0].body).toEqual({ ...ex, client: `headless@${VERSION}` });
   });
 });

@@ -22,7 +22,7 @@ describe('sendFeedback', () => {
     expect(c.headers).toEqual({ 'Content-Type': 'application/json', 'X-Project-Key': 'pk_test_123' });
     expect(c.credentials).toBe('omit');
     expect(id).toMatch(UUID);
-    expect(c.body).toEqual({ id, type: 'thumbs', score: 0, surface: 'assistant-answer', subject: 'msg_1', meta: { model: 'gpt-x' }, comment: 'Wrong', locale: 'en', client: 'headless@0.1.0' });
+    expect(c.body).toEqual({ id, type: 'thumbs', score: 0, surface: 'assistant-answer', subject: 'msg_1', meta: { model: 'gpt-x' }, comment: 'Wrong', locale: 'en', client: `headless@${VERSION}` });
     expect(validateRequest('/v1/feedback', c.body)).toEqual([]);
   });
 

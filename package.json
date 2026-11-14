@@ -1,9 +1,27 @@
 {
-  "name": "user-reactions",
+  "name": "@user-reactions/widget",
   "version": "0.1.0",
-  "description": "Inline feedback element for AI answers and key product flows.",
+  "description": "Embeddable feedback element (thumbs, CSAT, CES) for AI answers and key product flows, plus a tiny headless client.",
   "license": "MIT",
-  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/atuuri/user-reactions-widget.git"
+  },
+  "homepage": "https://github.com/atuuri/user-reactions-widget#readme",
+  "bugs": {
+    "url": "https://github.com/atuuri/user-reactions-widget/issues"
+  },
+  "keywords": [
+    "feedback",
+    "web-component",
+    "custom-element",
+    "thumbs",
+    "csat",
+    "ces",
+    "ai",
+    "llm",
+    "rating"
+  ],
   "type": "module",
   "main": "./dist/user-reactions.mjs",
   "module": "./dist/user-reactions.mjs",
@@ -15,18 +33,24 @@
       "types": "./dist/types/index.d.ts",
       "import": "./dist/user-reactions.mjs"
     },
-    "./iife": "./dist/user-reactions.js"
+    "./iife": "./dist/user-reactions.js",
+    "./package.json": "./package.json"
   },
   "files": [
     "dist"
   ],
   "sideEffects": true,
+  "publishConfig": {
+    "access": "public"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build && tsc -p tsconfig.build.json && node scripts/size.mjs",
     "size": "node scripts/size.mjs",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "pack:check": "node scripts/pack-check.mjs",
+    "prepack": "npm run build"
   },
   "devDependencies": {
     "happy-dom": "^21.0.4",

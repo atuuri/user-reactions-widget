@@ -10,7 +10,7 @@ The value is the context, not the buttons. Every rating carries `surface`, `subj
 ## Element
 
 ```html
-<script src="https://cdn.example.com/user-reactions.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1/dist/user-reactions.js" defer></script>
 
 <user-reactions
   project-key="pk_live_xxx"
@@ -23,7 +23,7 @@ The value is the context, not the buttons. Every rating carries `surface`, `subj
 </user-reactions>
 ```
 
-The tag name `user-reactions` matches the repo name.
+The tag name `user-reactions` matches the repo name and the npm org; the package is `@user-reactions/widget`, served from npm by jsDelivr and unpkg.
 
 ### Attributes
 
@@ -100,7 +100,7 @@ Host apps (including AI chat UIs) use these to react, e.g. offer a regenerate bu
 For surfaces that cannot render the element (native mobile, server-side, MCP Apps / chat-host UIs), export a tiny function from the ES module:
 
 ```ts
-import { sendFeedback } from "user-reactions";
+import { sendFeedback } from "@user-reactions/widget";
 await sendFeedback({ projectKey, type: "thumbs", score: 0, surface, subject, meta, comment });
 ```
 
@@ -123,13 +123,14 @@ Same payload and endpoint as the element, with `client: "headless@<version>"` in
 ## Dev setup
 
 - `npm run dev` serves `demo/index.html` with four examples (thumbs in a fake chat list, thumbs at the end of a knowledge-base article, CSAT, CES) and a mock endpoint that logs payloads to the console and the page.
-- Mock endpoint: `POST /mock/v1/feedback` and `/mock/v1/impressions` answer 202, or 400 if the body breaks `docs/api/openapi.yaml`. `/mock/fail/v1/*` answers 503 to exercise the retry and error path. M1 ships the thumbs example only; CSAT and CES examples arrive with M2.
+- Mock endpoint: `POST /mock/v1/feedback` and `/mock/v1/impressions` answer 202, or 400 if the body breaks `docs/api/openapi.yaml`. `/mock/fail/v1/*` answers 503 to exercise the retry and error path.
+- `demo/embed.html` loads the built `dist/user-reactions.js` with one script tag on a plain page (run `npm run build` first). M1 ships the thumbs example only; CSAT and CES examples arrive with M2.
 
 ## Milestones
 
 1. **M1 Thumbs**: element with `thumbs`, impressions, comment modes, events, headless client, demo page, tests, size check, README. English strings only; other `type` values fire `invalid-attribute` until M2.
 2. **M2 Scales**: `csat` and `ces`, keyboard navigation for scales, fi/sv strings.
-3. **M3 Polish**: dark-mode check, reduced motion, attribute-reset behaviour, publish to npm as 0.1.0.
+3. **M3 Polish**: dark-mode check, reduced motion, attribute-reset behaviour, publish to npm as `@user-reactions/widget` 0.1.0 (see `docs/releasing.md`).
 
 ## Acceptance criteria (M1)
 

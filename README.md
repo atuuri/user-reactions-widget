@@ -13,19 +13,23 @@ Status: pre-release (milestone M1: thumbs). Spec in [`docs/widget.md`](docs/widg
 One script tag and one element:
 
 ```html
-<script src="https://cdn.example.com/user-reactions.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1/dist/user-reactions.js" defer></script>
 <user-reactions project-key="pk_live_xxx" type="thumbs"
   surface="assistant-answer" subject="msg_8f2c" comment="on-negative">
 </user-reactions>
 ```
 
-Or from npm (publishing starts with 0.1.0 in M3):
+Or from npm:
 
-```js
-import "user-reactions"; // registers <user-reactions>
+```sh
+npm install @user-reactions/widget
 ```
 
-The script tag uses `dist/user-reactions.js` (IIFE, also exposes `window.UserReactions`); bundlers use `dist/user-reactions.mjs`.
+```js
+import "@user-reactions/widget"; // registers <user-reactions>
+```
+
+The first npm release is 0.1.0 (milestone M3); until then the CDN link and `npm install` do not resolve. The script tag uses `dist/user-reactions.js` (IIFE, also exposes `window.UserReactions`); bundlers use `dist/user-reactions.mjs`. `@0.1` follows the latest 0.1.x; pin an exact version and add the `integrity` hash from the [GitHub release notes](https://github.com/atuuri/user-reactions-widget/releases) if you want the file to never change.
 
 ## Attributes
 
@@ -59,7 +63,7 @@ document.addEventListener("user-reactions:error", (e) => console.warn(e.detail.c
 For surfaces that cannot render the element (native apps, servers, chat hosts):
 
 ```js
-import { sendFeedback } from "user-reactions";
+import { sendFeedback } from "@user-reactions/widget";
 
 const { id } = await sendFeedback({
   projectKey: "pk_live_xxx",
@@ -86,15 +90,30 @@ user-reactions::part(button-selected) { background: #2563eb22; }
 
 ## Development
 
-Requires Node 22.12+ for development (Vitest 5).
+Requires Node 22.12+ for development (Vitest 5); `nvm use` picks it up from `.nvmrc`.
 
 ```sh
 npm install
 npm run dev     # demo at http://localhost:5173/demo/ with a mock API that logs payloads
+                # after npm run build: /demo/embed.html tests the built bundle on a plain page
 npm test        # Vitest + happy-dom, payloads checked against docs/api/openapi.yaml
 npm run build   # dist/user-reactions.mjs, dist/user-reactions.js, dist/types; fails over the size budget
 npm run size    # size check of the IIFE build (≤ 8 kB min+gzip)
+npm run pack:check  # after build: checks the npm tarball installs and works for consumers
 ```
+
+CI (`.github/workflows/ci.yml`) runs typecheck, tests, build, size and package checks on every pull request, on Node 22 and 24.
+
+## Releasing
+
+Releases are published from CI when a version tag is pushed, after approval:
+
+```sh
+npm version 0.1.0        # bumps package.json, commits, tags v0.1.0
+git push --follow-tags   # Release workflow: verify → approve → npm + GitHub Release
+```
+
+One-time setup and details: [`docs/releasing.md`](docs/releasing.md). Changes are listed in [`CHANGELOG.md`](CHANGELOG.md).
 
 The mock answers `POST /mock/v1/feedback` and `/mock/v1/impressions` with 202 (400 if the body breaks the API contract). Tick "Simulate API outage" in the demo to send to `/mock/fail`, which answers 503.
 
