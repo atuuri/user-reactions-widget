@@ -29,7 +29,7 @@ npm install @user-reactions/widget
 import "@user-reactions/widget"; // registers <user-reactions>
 ```
 
-The first npm release is 0.1.0 (milestone M3); until then the CDN link and `npm install` do not resolve. The script tag uses `dist/user-reactions.js` (IIFE, also exposes `window.UserReactions`); bundlers use `dist/user-reactions.mjs`. `@0.1` follows the latest 0.1.x; pin an exact version and add the `integrity` hash from the [GitHub release notes](https://github.com/atuuri/User-reactions-widget/releases) if you want the file to never change.
+The first npm release is 0.1.0 (milestone M3); until then the CDN link and `npm install` do not resolve. The script tag uses `dist/user-reactions.js` (IIFE, also exposes `window.UserReactions`); bundlers use `dist/user-reactions.mjs`. `@0.1` follows the latest 0.1.x; pin an exact version and add the `integrity` hash from the [GitHub release notes](https://github.com/atuuri/user-reactions-widget/releases) if you want the file to never change.
 
 ## Attributes
 

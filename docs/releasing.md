@@ -50,7 +50,7 @@ npm only lets you configure trusted publishing on a package that already exists,
    - Store it as secret `NPM_TOKEN` in the `npm-publish` **environment** (not a repository secret).
    - Release 0.1.0 as above.
 8. npmjs.com → `@user-reactions/widget` → Settings → Trusted publishing → GitHub Actions:
-   - Owner `atuuri`, repository `User-reactions-widget`, workflow `release.yml`, environment `npm-publish`.
+   - Owner `atuuri`, repository `user-reactions-widget`, workflow `release.yml`, environment `npm-publish`.
    - Then set publishing access to "Require two-factor authentication and disallow tokens".
 9. Delete the `NPM_TOKEN` environment secret and revoke the token on npm. Later releases use trusted publishing (OIDC); no token is stored anywhere.
 

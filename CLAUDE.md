@@ -1,7 +1,7 @@
-# User-reactions-widget: embeddable feedback element
+# user-reactions-widget: embeddable feedback element
 
 MIT-licensed, public repo. The product has two repos:
-- `User-reactions-widget` (this repo): the embeddable element and a tiny headless client.
+- `user-reactions-widget` (this repo): the embeddable element and a tiny headless client.
 - `platform` (private): ingest API server and reports.
 
 Never add server code, pricing, customer names, business notes or secrets to this repo: it and its full history are public.

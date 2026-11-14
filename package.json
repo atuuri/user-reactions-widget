@@ -5,11 +5,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/atuuri/User-reactions-widget.git"
+    "url": "git+https://github.com/atuuri/user-reactions-widget.git"
   },
-  "homepage": "https://github.com/atuuri/User-reactions-widget#readme",
+  "homepage": "https://github.com/atuuri/user-reactions-widget#readme",
   "bugs": {
-    "url": "https://github.com/atuuri/User-reactions-widget/issues"
+    "url": "https://github.com/atuuri/user-reactions-widget/issues"
   },
   "keywords": [
     "feedback",
