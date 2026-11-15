@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 import { readFileSync } from 'node:fs';
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_ENDPOINT, ReactionsError, VERSION, sendFeedback, uuid } from '../src/client';
-import { spec, validateRequest } from '../tools/openapi';
+import { ReactionsError, VERSION, sendFeedback, uuid } from '../src/client';
+import { validateRequest } from '../tools/openapi';
 import { mockFetch } from './helpers';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/;
@@ -39,11 +39,10 @@ describe('sendFeedback', () => {
     expect(net.calls.map((c) => c.body.id)).toEqual([id, id]);
   });
 
-  it('defaults to the hosted endpoint from the API contract', async () => {
-    expect(DEFAULT_ENDPOINT).toBe(spec.servers[0].url);
+  it('without an endpoint, sends nothing and rejects with invalid-attribute', async () => {
     const net = mockFetch();
-    await sendFeedback({ ...base, endpoint: undefined });
-    expect(net.calls[0].url).toBe('https://api.example.com/v1/feedback');
+    await expect(sendFeedback({ ...base, endpoint: undefined })).rejects.toMatchObject({ code: 'invalid-attribute' });
+    expect(net.calls).toHaveLength(0);
   });
 
   it('retries once after 1 s on a network error', async () => {

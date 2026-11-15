@@ -37,7 +37,7 @@ async function page(html: string) {
   return { window, document: window.document, posts, errors };
 }
 
-const ELEMENT = `<user-reactions project-key="pk_test" type="thumbs" surface="checkout" comment="on-negative"></user-reactions>`;
+const ELEMENT = `<user-reactions project-key="pk_test" type="thumbs" surface="checkout" comment="on-negative" endpoint="https://api.test"></user-reactions>`;
 
 it.each([
   ['script after the element', `<!doctype html><html><body><p>Order placed.</p>${ELEMENT}<script>BUNDLE</script></body></html>`],
@@ -53,7 +53,7 @@ it.each([
   await window.happyDOM.waitUntilComplete();
   expect(sr.querySelector('form')!.hidden).toBe(false);
   expect(posts).toHaveLength(1);
-  expect(posts[0].url).toBe('https://api.example.com/v1/feedback');
+  expect(posts[0].url).toBe('https://api.test/v1/feedback');
   expect(posts[0].body).toMatchObject({ type: 'thumbs', score: 0, surface: 'checkout', client: `widget@${VERSION}` });
 
   expect(errors).toEqual([]);

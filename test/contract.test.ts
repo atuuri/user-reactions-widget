@@ -84,7 +84,7 @@ describe('payloads match the spec examples', () => {
   it('sendFeedback: produces the thumbsDown example, with a headless client tag', async () => {
     const net = mockFetch();
     const { id, type, score, surface, subject, meta, comment, locale } = thumbsDown;
-    await sendFeedback({ projectKey: 'pk', id, type, score, surface, subject, meta, comment, locale });
+    await sendFeedback({ projectKey: 'pk', id, type, score, surface, subject, meta, comment, locale, endpoint: 'https://api.test' });
     expect(net.calls[0].body).toEqual({ ...thumbsDown, client: `headless@${VERSION}` });
     expect(validateRequest('/v1/feedback', net.calls[0].body)).toEqual([]);
   });
@@ -92,7 +92,7 @@ describe('payloads match the spec examples', () => {
   it('sendFeedback: produces the ces example', async () => {
     const ex = feedback.examples.ces as Record<string, any>;
     const net = mockFetch();
-    await sendFeedback({ projectKey: 'pk', id: ex.id, type: ex.type, score: ex.score, surface: ex.surface, locale: ex.locale });
+    await sendFeedback({ projectKey: 'pk', id: ex.id, type: ex.type, score: ex.score, surface: ex.surface, locale: ex.locale, endpoint: 'https://api.test' });
     expect(net.calls[0].body).toEqual({ ...ex, client: `headless@${VERSION}` });
   });
 });

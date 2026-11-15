@@ -406,12 +406,16 @@ describe('attributes', () => {
     expect(net.feedback()[0].body).toMatchObject({ meta: { model: 'gpt-x', release: '2026.11.2' }, locale: 'fi' });
   });
 
-  it('defaults to the hosted endpoint', async () => {
+  it('without an endpoint, still renders but sends nothing and fires invalid-attribute', async () => {
     const net = mockFetch();
     const m = mount({ endpoint: null });
     m.btn(1).click();
     await flush();
-    expect(net.feedback()[0].url).toBe('https://api.example.com/v1/feedback');
+    expect(net.calls).toHaveLength(0);
+    expect(m.events.at(-1)).toEqual({
+      type: 'error',
+      detail: { code: 'invalid-attribute', message: 'endpoint is required until the hosted API launches' },
+    });
   });
 
   it('reads endpoint at send time and tolerates a trailing slash', async () => {
