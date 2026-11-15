@@ -12,7 +12,7 @@ it('importing the package in Node exposes sendFeedback and does not throw', asyn
 
   const fetch = vi.fn(async () => new Response('{}', { status: 202 }));
   vi.stubGlobal('fetch', fetch);
-  const { id } = await mod.sendFeedback({ projectKey: 'pk', type: 'thumbs', score: 1, surface: 'server' });
+  const { id } = await mod.sendFeedback({ projectKey: 'pk', type: 'thumbs', score: 1, surface: 'server', endpoint: 'https://api.test' });
   expect(id).toMatch(/^[0-9a-f-]{36}$/);
   expect(fetch).toHaveBeenCalledOnce();
 });

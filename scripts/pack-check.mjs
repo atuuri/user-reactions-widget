@@ -46,10 +46,10 @@ try {
     const require = createRequire(import.meta.url);
     const calls = [];
     globalThis.fetch = async (url, init) => { calls.push({ url, init }); return new Response(null, { status: 202 }); };
-    const { id } = await m.sendFeedback({ projectKey: 'pk', type: 'thumbs', score: 1, surface: 'pack-check' });
+    const { id } = await m.sendFeedback({ projectKey: 'pk', type: 'thumbs', score: 1, surface: 'pack-check', endpoint: 'https://api.test' });
     const body = JSON.parse(calls[0].init.body);
     const ok = typeof m.UserReactionsElement === 'function' && m.VERSION === ${JSON.stringify(pkg.version)}
-      && calls[0].url === 'https://api.example.com/v1/feedback' && body.id === id && body.client === 'headless@' + m.VERSION
+      && calls[0].url === 'https://api.test/v1/feedback' && body.id === id && body.client === 'headless@' + m.VERSION
       && require.resolve(${JSON.stringify(pkg.name + '/iife')}).endsWith('user-reactions.js')
       && require(${JSON.stringify(pkg.name + '/package.json')}).version === m.VERSION;
     if (!ok) { console.error(JSON.stringify({ VERSION: m.VERSION, url: calls[0]?.url, body })); process.exit(1); }

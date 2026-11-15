@@ -37,7 +37,7 @@ The tag name `user-reactions` matches the repo name and the npm org; the package
 | `comment` | no | `off` (default), `optional`, `on-negative` | `on-negative`: show comment box only for thumbs down, CSAT 1–2, CES 1–3. |
 | `question` | no | string | Overrides the default question text. |
 | `lang` | no | `en` (default), `fi`, `sv` | Built-in strings. |
-| `endpoint` | no | URL | Defaults to the hosted API; used for self-hosting and the dev mock. |
+| `endpoint` | yes, until the hosted API launches | URL | API base URL; the element appends `/v1/...`. Used for self-hosting and the dev mock. Without it nothing is sent and `invalid-attribute` fires on each request the element would make; the element still renders. |
 
 ### Scales and stored scores
 
@@ -85,7 +85,7 @@ Error codes:
 
 | `code` | When |
 |---|---|
-| `invalid-attribute` | `project-key` or `surface` missing, `surface`/`subject` too long, or `type` not supported. Nothing is rendered. |
+| `invalid-attribute` | `project-key` or `surface` missing, `surface`/`subject` too long, or `type` not supported: nothing is rendered. `endpoint` missing: the element renders, but each request it would send fires this instead. |
 | `invalid-meta` | `meta` is not a JSON object of ≤ 20 string values (≤ 200 chars). `meta` is ignored; the element still works. |
 | `network` | The request could not be made (offline, DNS, CORS), after the retry. |
 | `http` | The API answered with a non-2xx status (after the retry for 429/5xx). `message` includes the status. |
@@ -104,7 +104,7 @@ import { sendFeedback } from "@user-reactions/widget";
 await sendFeedback({ projectKey, type: "thumbs", score: 0, surface, subject, meta, comment });
 ```
 
-Same payload and endpoint as the element, with `client: "headless@<version>"` instead of `widget@<version>`. Optional `id` (to update an earlier item) and `endpoint`. Resolves with `{ id }`; rejects with a `ReactionsError` (`code` as in the error table, plus `status` for `http`) after the same retry rule. Importing the module outside a browser does not register the element.
+Same payload and endpoint as the element, with `client: "headless@<version>"` instead of `widget@<version>`. Optional `id` (to update an earlier item). `endpoint` is required until the hosted API launches; without it the call rejects with `invalid-attribute` and sends nothing. Resolves with `{ id }`; rejects with a `ReactionsError` (`code` as in the error table, plus `status` for `http`) after the same retry rule. Importing the module outside a browser does not register the element.
 
 ## Styling
 

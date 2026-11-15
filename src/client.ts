@@ -4,7 +4,6 @@
 declare const __UR_VERSION__: string; // injected from package.json by vite.config.ts
 
 export const VERSION: string = __UR_VERSION__;
-export const DEFAULT_ENDPOINT = 'https://api.example.com';
 export const RETRY_DELAY_MS = 1000;
 
 export type FeedbackType = 'thumbs' | 'csat' | 'ces';
@@ -34,7 +33,7 @@ export interface SendFeedbackOptions extends Omit<FeedbackPayload, 'id' | 'clien
   projectKey: string;
   /** Re-use an id to update an earlier item (server upserts). Generated when omitted. */
   id?: string;
-  /** API base URL. Defaults to the hosted API. */
+  /** API base URL. Required until the hosted API launches. */
   endpoint?: string;
 }
 
@@ -79,10 +78,12 @@ const retryable = (e: ReactionsError) => e.code == 'network' || e.status == 429 
 
 /**
  * POST JSON to `${endpoint}${path}`. Retries once after 1 s on retryable failures.
- * Rejects with ReactionsError. No cookies are sent.
+ * Rejects with ReactionsError. No cookies are sent. Without an endpoint nothing is sent:
+ * there is no hosted API yet, so a built-in default would only produce failed requests.
  */
 export async function post(endpoint: string | undefined, path: string, projectKey: string, body: object): Promise<Response> {
-  const url = (endpoint || DEFAULT_ENDPOINT).replace(/\/+$/, '') + path;
+  if (!endpoint) throw new ReactionsError('invalid-attribute', 'endpoint is required until the hosted API launches');
+  const url = endpoint.replace(/\/+$/, '') + path;
   const attempt = async () => {
     let res: Response;
     try {

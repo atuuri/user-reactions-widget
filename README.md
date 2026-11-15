@@ -13,11 +13,14 @@ Status: pre-release (milestone M1: thumbs). Spec in [`docs/widget.md`](docs/widg
 One script tag and one element:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1/dist/user-reactions.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1.0-beta.1/dist/user-reactions.js" defer></script>
 <user-reactions project-key="pk_live_xxx" type="thumbs"
-  surface="assistant-answer" subject="msg_8f2c" comment="on-negative">
+  surface="assistant-answer" subject="msg_8f2c" comment="on-negative"
+  endpoint="https://your-api.example">
 </user-reactions>
 ```
+
+There is no hosted API yet, so `endpoint` is required: point it at your own server or the [dev mock](#development).
 
 Or from npm:
 
@@ -29,7 +32,7 @@ npm install @user-reactions/widget
 import "@user-reactions/widget"; // registers <user-reactions>
 ```
 
-The first npm release is 0.1.0 (milestone M3); until then the CDN link and `npm install` do not resolve. The script tag uses `dist/user-reactions.js` (IIFE, also exposes `window.UserReactions`); bundlers use `dist/user-reactions.mjs`. `@0.1` follows the latest 0.1.x; pin an exact version and add the `integrity` hash from the [GitHub release notes](https://github.com/atuuri/user-reactions-widget/releases) if you want the file to never change.
+The current release is the beta `0.1.0-beta.1`; `npm install` installs it. In the script tag, pin the exact version: a range such as `@0.1` does not match pre-releases, so it only resolves from 0.1.0 (milestone M3) on. The script tag uses `dist/user-reactions.js` (IIFE, also exposes `window.UserReactions`); bundlers use `dist/user-reactions.mjs`. To make sure the file never changes, add the `integrity` hash from the [GitHub release notes](https://github.com/atuuri/user-reactions-widget/releases).
 
 ## Attributes
 
@@ -43,7 +46,16 @@ The first npm release is 0.1.0 (milestone M3); until then the CDN link and `npm 
 | `comment` | no | `off` (default), `optional`, `on-negative`. |
 | `question` | no | Overrides the question text. |
 | `lang` | no | `en` (default). Sent as `locale`. |
-| `endpoint` | no | API base URL, for self-hosting or the dev mock. |
+| `endpoint` | yes, for now | API base URL, e.g. `https://your-api.example` or `/mock`. The element appends `/v1/impressions` and `/v1/feedback`. Required until the hosted API launches; without it nothing is sent and `user-reactions:error` fires with `invalid-attribute`. |
+
+## Requests
+
+The element sends two kinds of `POST` request, with a JSON body and an `X-Project-Key` header:
+
+- **`/v1/impressions`**: once per element, the first time at least half of it is visible. It lets you work out the response rate.
+- **`/v1/feedback`**: on each rating, and again with the same `id` when a comment is sent.
+
+Because of the custom header, browsers send a CORS preflight first. Your server must allow the page's origin and the `Content-Type` and `X-Project-Key` headers. A page opened from a local file has the origin `null`; serving the test page from the dev server avoids CORS altogether.
 
 ## Events
 
@@ -73,6 +85,7 @@ const { id } = await sendFeedback({
   subject: "msg_8f2c",
   meta: { model: "gpt-x" },
   comment: "The answer ignored my order number.",
+  endpoint: "https://your-api.example",
 });
 ```
 
@@ -95,6 +108,7 @@ Requires Node 22.12+ for development (Vitest 5); `nvm use` picks it up from `.nv
 ```sh
 npm install
 npm run dev     # demo at http://localhost:5173/demo/ with a mock API that logs payloads
+                # your own test page: put it in demo/ and set endpoint="/mock"
                 # after npm run build: /demo/embed.html tests the built bundle on a plain page
 npm test        # Vitest + happy-dom, payloads checked against docs/api/openapi.yaml
 npm run build   # dist/user-reactions.mjs, dist/user-reactions.js, dist/types; fails over the size budget

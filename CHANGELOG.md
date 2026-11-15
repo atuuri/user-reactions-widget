@@ -2,6 +2,14 @@
 
 All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Changed
+- `endpoint` is required until the hosted API launches. Without it the element and `sendFeedback()` send nothing and report `invalid-attribute`, instead of sending to the placeholder `https://api.example.com`.
+
+### Docs
+- README: install snippet pins the beta version (`@0.1` does not match pre-releases), documents the impression and feedback requests, and the CORS requirements for test servers.
+
 ## 0.1.0-beta.1
 
 ### Added
