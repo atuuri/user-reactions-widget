@@ -4,6 +4,9 @@ All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versi
 
 ## Unreleased
 
+### Added
+- `question=""` shows only the thumbs, without question text. Screen readers still hear the default question.
+
 ### Changed
 - `endpoint` is required until the hosted API launches. Without it the element and `sendFeedback()` send nothing and report `invalid-attribute`, instead of sending to the placeholder `https://api.example.com`.
 

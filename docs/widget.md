@@ -35,7 +35,7 @@ The tag name `user-reactions` matches the repo name and the npm org; the package
 | `subject` | no | string ≤ 200 | What exactly was rated, e.g. message id, order step. |
 | `meta` | no | JSON object, string values, ≤ 20 keys | Free context: model, prompt version, release, experiment. Invalid JSON → ignored, `error` event fired. |
 | `comment` | no | `off` (default), `optional`, `on-negative` | `on-negative`: show comment box only for thumbs down, CSAT 1–2, CES 1–3. |
-| `question` | no | string | Overrides the default question text. |
+| `question` | no | string | Overrides the default question text. An empty value (`question=""`) hides the question and shows only the buttons; the default question text still labels the button group for screen readers. |
 | `lang` | no | `en` (default), `fi`, `sv` | Built-in strings. |
 | `endpoint` | yes, until the hosted API launches | URL | API base URL; the element appends `/v1/...`. Used for self-hosting and the dev mock. Without it nothing is sent and `invalid-attribute` fires on each request the element would make; the element still renders. |
 

@@ -155,7 +155,10 @@ export class UserReactionsElement extends Base {
       `<span part="thanks" role="status"></span></div>` +
       `<form hidden><textarea part="comment" maxlength="2000"></textarea><button part="send" type="submit"></button></form>`;
 
-    this.$('[part=question]').textContent = this.attr('question') || s.thumbs;
+    // question="" shows only the buttons; the hidden text still labels the group for screen readers.
+    const q = this.$('[part=question]');
+    q.textContent = this.attr('question') || s.thumbs;
+    q.hidden = this.getAttribute('question')?.trim() === '';
     for (const b of this.buttons()) {
       const label = b.dataset.s == '1' ? s.up : s.down;
       b.setAttribute('aria-label', label);
