@@ -50,6 +50,21 @@ describe('render', () => {
     expect(m.sr.querySelector('b')).toBeNull();
   });
 
+  it('question="" shows only the buttons, still labelled for screen readers', () => {
+    mockFetch();
+    const m = mount({ question: '' });
+    const q = m.q('[part=question]') as HTMLElement;
+    expect(q.hidden).toBe(true);
+    expect(q.textContent).toBe('Was this helpful?');
+    expect(m.sr.querySelector('[role=group]')!.getAttribute('aria-labelledby')).toBe(q.id);
+    expect(m.btn(1).getAttribute('aria-label')).toBe('Helpful');
+  });
+
+  it('shows the default question when the attribute is absent', () => {
+    mockFetch();
+    expect((mount().q('[part=question]') as HTMLElement).hidden).toBe(false);
+  });
+
   it('does not touch the host element id', () => {
     mockFetch();
     const m = mount({ id: 'host-id' });

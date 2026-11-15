@@ -45,7 +45,7 @@ The current release is the beta `0.1.0-beta.1`; `npm install` installs it. In th
 | `subject` | no | What was rated, e.g. a message id. ≤ 200 chars. |
 | `meta` | no | JSON object of string values, e.g. `'{"model":"gpt-x","release":"2026.11.2"}'`. |
 | `comment` | no | `off` (default), `optional`, `on-negative`. |
-| `question` | no | Overrides the question text. |
+| `question` | no | Overrides the question text. Defaults to "Was this helpful?". `question=""` shows only the thumbs; screen readers still hear the default question. |
 | `lang` | no | `en` (default). Sent as `locale`. |
 | `endpoint` | yes, for now | API base URL, e.g. `https://your-api.example` or `/mock`. The element appends `/v1/impressions` and `/v1/feedback`. Required until the hosted API launches; without it nothing is sent and `user-reactions:error` fires with `invalid-attribute`. |
 
