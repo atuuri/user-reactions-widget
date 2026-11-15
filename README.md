@@ -13,7 +13,7 @@ Status: pre-release (milestone M1: thumbs). Spec in [`docs/widget.md`](docs/widg
 One script tag and one element:
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1.0-beta.1/dist/user-reactions.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1.0-beta.2/dist/user-reactions.js" defer></script>
 <user-reactions project-key="pk_live_xxx" type="thumbs"
   surface="assistant-answer" subject="msg_8f2c" comment="on-negative"
   question="Did this answer help you?"
@@ -33,7 +33,7 @@ npm install @user-reactions/widget
 import "@user-reactions/widget"; // registers <user-reactions>
 ```
 
-The current release is the beta `0.1.0-beta.1`; `npm install` installs it. In the script tag, pin the exact version: a range such as `@0.1` does not match pre-releases, so it only resolves from 0.1.0 (milestone M3) on. The script tag uses `dist/user-reactions.js` (IIFE, also exposes `window.UserReactions`); bundlers use `dist/user-reactions.mjs`. To make sure the file never changes, add the `integrity` hash from the [GitHub release notes](https://github.com/atuuri/user-reactions-widget/releases).
+The current release is the beta `0.1.0-beta.2`; install it from npm with `npm install @user-reactions/widget@next`. In the script tag, pin the exact version: a range such as `@0.1` does not match pre-releases, so it only resolves from 0.1.0 (milestone M3) on. The script tag uses `dist/user-reactions.js` (IIFE, also exposes `window.UserReactions`); bundlers use `dist/user-reactions.mjs`. To make sure the file never changes, add the `integrity` hash from the [GitHub release notes](https://github.com/atuuri/user-reactions-widget/releases).
 
 ## Attributes
 
