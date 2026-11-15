@@ -16,6 +16,7 @@ One script tag and one element:
 <script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1.0-beta.1/dist/user-reactions.js" defer></script>
 <user-reactions project-key="pk_live_xxx" type="thumbs"
   surface="assistant-answer" subject="msg_8f2c" comment="on-negative"
+  question="Did this answer help you?"
   endpoint="https://your-api.example">
 </user-reactions>
 ```
