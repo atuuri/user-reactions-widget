@@ -2,7 +2,7 @@
 
 All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.1.0-beta.2
 
 ### Added
 - `question=""` shows only the thumbs, without question text. Screen readers still hear the default question.
