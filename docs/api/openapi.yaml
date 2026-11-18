@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Feedback ingest API
-  version: 0.2.0
+  version: 0.1.0
   description: >
     Public, write-only API used by the widget and the headless client.
     Authenticated with a public project key. Must allow CORS from any origin.
