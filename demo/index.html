@@ -15,6 +15,9 @@
         --accent: #2563eb;
         --ok: #15803d;
         --bad: #b91c1c;
+        --chat-bg: #eaf1fc;
+        --chat-line: #c9d9f3;
+        --bubble: #2563eb;
         font: 15px/1.5 system-ui, -apple-system, 'Segoe UI', sans-serif;
       }
       @media (prefers-color-scheme: dark) {
@@ -26,6 +29,9 @@
           --accent: #7aa2ff;
           --ok: #4ade80;
           --bad: #f87171;
+          --chat-bg: #172131;
+          --chat-line: #26344a;
+          --bubble: #2f55c4;
         }
       }
       * { box-sizing: border-box; }
@@ -37,8 +43,9 @@
       main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 420px); gap: 16px; padding: 16px; max-width: 1200px; margin: 0 auto; }
       @media (max-width: 860px) { main { grid-template-columns: 1fr; } }
       .examples { display: flex; flex-direction: column; gap: 32px; min-width: 0; }
-      h2.example { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
-      .chat { display: flex; flex-direction: column; gap: 12px; }
+      .examples > section + section { padding-top: 32px; border-top: 1px solid var(--line); }
+      h2.example { font-size: 20px; font-weight: 700; line-height: 1.3; color: CanvasText; margin: 0 0 14px; padding-left: 12px; border-left: 4px solid var(--accent); }
+      .chat { display: flex; flex-direction: column; gap: 12px; background: var(--chat-bg); border: 1px solid var(--chat-line); border-radius: 14px; padding: 16px; }
       .kb { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px 28px; max-width: 46em; font-family: Georgia, 'Iowan Old Style', serif; font-size: 16px; line-height: 1.65; }
       .kb h1 { font-size: 26px; line-height: 1.25; margin: 6px 0 4px; }
       .kb h3 { font-size: 18px; margin: 22px 0 6px; }
@@ -54,7 +61,7 @@
       .card .done { font-weight: 600; color: var(--ok); }
       .card user-reactions { margin-top: 14px; --ur-accent: var(--accent); --ur-muted: var(--muted); }
       .msg { padding: 12px 14px; border-radius: 12px; max-width: 46em; }
-      .user { align-self: flex-end; background: var(--accent); color: #fff; }
+      .user { align-self: flex-end; background: var(--bubble); color: #fff; }
       .assistant { background: var(--card); border: 1px solid var(--line); }
       .assistant p { margin: 0 0 10px; }
       .assistant user-reactions { --ur-muted: var(--muted); --ur-accent: var(--accent); font-size: 13px; }
