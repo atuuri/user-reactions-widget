@@ -49,6 +49,10 @@
       .kb user-reactions { margin-top: 24px; padding-top: 16px; border-top: 1px solid var(--line); font: 14px system-ui, sans-serif; --ur-accent: var(--accent); --ur-gap: .6em; }
       .kb .support { font: 14px system-ui, sans-serif; margin: 12px 0 0; }
       .kb .support a { color: var(--accent); }
+      .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 18px 20px; max-width: 46em; }
+      .card p { margin: 0 0 8px; }
+      .card .done { font-weight: 600; color: var(--ok); }
+      .card user-reactions { margin-top: 14px; --ur-accent: var(--accent); --ur-muted: var(--muted); }
       .msg { padding: 12px 14px; border-radius: 12px; max-width: 46em; }
       .user { align-self: flex-end; background: var(--accent); color: #fff; }
       .assistant { background: var(--card); border: 1px solid var(--line); }
@@ -73,7 +77,7 @@
     <header>
       <h1>&lt;user-reactions&gt; demo</h1>
       <a href="/demo/embed.html" style="font-size: 13px; color: var(--accent)">Test the built bundle →</a>
-      <p>Thumbs widgets under fake AI chat answers and at the end of a help article (comment on thumbs down). Scroll to trigger impressions.</p>
+      <p>Thumbs under AI chat answers and a help article, CSAT after checkout and CES after a support flow. Scroll to trigger impressions; try the arrow keys on a scale.</p>
       <label><input type="checkbox" id="outage" /> Simulate API outage (503)</label>
     </header>
     <main>
@@ -112,6 +116,38 @@
               comment="on-negative"
               endpoint="/mock"></user-reactions>
           </article>
+        </section>
+
+        <section aria-labelledby="h-csat">
+          <h2 class="example" id="h-csat">CSAT after checkout</h2>
+          <div class="card">
+            <p class="done">✓ Order #48213 placed</p>
+            <p>We sent a confirmation to your email. Estimated delivery: Thursday.</p>
+            <user-reactions
+              project-key="pk_demo_local"
+              type="csat"
+              surface="checkout"
+              subject="order-confirmation"
+              meta='{"release":"2026.11.2","payment":"card"}'
+              question="How satisfied are you with checkout?"
+              comment="on-negative"
+              endpoint="/mock"></user-reactions>
+          </div>
+        </section>
+
+        <section aria-labelledby="h-ces">
+          <h2 class="example" id="h-ces">CES after a support flow</h2>
+          <div class="card">
+            <p class="done">✓ Your address was updated</p>
+            <p>The new address applies to all orders that have not shipped yet.</p>
+            <user-reactions
+              project-key="pk_demo_local"
+              type="ces"
+              surface="support-flow"
+              subject="change-address"
+              comment="optional"
+              endpoint="/mock"></user-reactions>
+          </div>
         </section>
       </div>
       <aside aria-label="Request and event log">

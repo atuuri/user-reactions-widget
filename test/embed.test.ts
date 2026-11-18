@@ -65,3 +65,20 @@ it('loading the bundle twice is harmless', async () => {
   expect(document.querySelector('user-reactions')!.shadowRoot).toBeTruthy();
   expect(errors).toEqual([]);
 });
+
+it('the built bundle renders csat and ces scales on a plain page', async () => {
+  const scales = ['csat', 'ces']
+    .map((t) => `<user-reactions project-key="pk_test" type="${t}" surface="${t}-page" endpoint="https://api.test"></user-reactions>`)
+    .join('');
+  const { window, document, posts, errors } = await page(`<!doctype html><html><body>${scales}<script>BUNDLE</script></body></html>`);
+  const [csat, ces] = [...document.querySelectorAll('user-reactions')].map((el) => el.shadowRoot!);
+  expect(csat.querySelectorAll('button[data-s]')).toHaveLength(5);
+  expect(ces.querySelectorAll('button[data-s]')).toHaveLength(7);
+  expect(ces.querySelector('[part=question]')!.textContent).toBe('How easy was this?');
+
+  (ces.querySelector('button[data-s="6"]') as unknown as HTMLButtonElement).click();
+  await window.happyDOM.waitUntilComplete();
+  expect(posts.map((p) => p.body)).toEqual([expect.objectContaining({ type: 'ces', score: 6, surface: 'ces-page' })]);
+  expect(errors).toEqual([]);
+  await window.happyDOM.close();
+});

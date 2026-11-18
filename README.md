@@ -2,7 +2,7 @@
 
 Inline feedback element for AI answers and key product flows: thumbs up/down, CSAT and CES, with an optional comment and the context of what was rated.
 
-Status: pre-release (milestone M1: thumbs). Spec in [`docs/widget.md`](docs/widget.md), API contract in [`docs/api/openapi.yaml`](docs/api/openapi.yaml).
+Status: pre-release (milestone M2: thumbs, CSAT and CES). Spec in [`docs/widget.md`](docs/widget.md), API contract in [`docs/api/openapi.yaml`](docs/api/openapi.yaml).
 
 - Vanilla Web Component, no runtime dependencies, under 8 kB min+gzip.
 - No cookies, no storage, no fingerprinting. Only the ids you pass in.
@@ -40,12 +40,12 @@ The current release is the beta `0.1.0-beta.2`; install it from npm with `npm in
 | Attribute | Required | Notes |
 |---|---|---|
 | `project-key` | yes | Public, write-only project key. |
-| `type` | yes | `thumbs` (`csat` and `ces` arrive in M2). |
+| `type` | yes | `thumbs` (👍/👎, score 1/0), `csat` (1–5) or `ces` (1–7). |
 | `surface` | yes | Where in the product, e.g. `assistant-answer`, `checkout`. ≤ 100 chars. |
 | `subject` | no | What was rated, e.g. a message id. ≤ 200 chars. |
 | `meta` | no | JSON object of string values, e.g. `'{"model":"gpt-x","release":"2026.11.2"}'`. |
 | `comment` | no | `off` (default), `optional`, `on-negative`. |
-| `question` | no | Overrides the question text. Defaults to "Was this helpful?". `question=""` shows only the thumbs; screen readers still hear the default question. |
+| `question` | no | Overrides the question text. Defaults to "Was this helpful?", "How satisfied are you?" or "How easy was this?" by type. `question=""` shows only the buttons; screen readers still hear the default question. |
 | `lang` | no | `en` (default). Sent as `locale`. |
 | `endpoint` | yes, for now | API base URL, e.g. `https://your-api.example` or `/mock`. The element appends `/v1/impressions` and `/v1/feedback`. Required until the hosted API launches; without it nothing is sent and `user-reactions:error` fires with `invalid-attribute`. |
 
@@ -95,7 +95,7 @@ Same payload and endpoint as the element. Rejects with a `ReactionsError` (`code
 ## Styling
 
 CSS custom properties: `--ur-font`, `--ur-text`, `--ur-muted`, `--ur-accent`, `--ur-bg`, `--ur-radius`, `--ur-gap`.
-Parts: `question`, `button`, `button-selected`, `comment`, `send`, `thanks`.
+Parts: `question`, `button`, `button-selected`, `scale-label` (csat/ces end captions), `comment`, `send`, `thanks`.
 
 ```css
 user-reactions { --ur-accent: #2563eb; --ur-muted: #667085; }
