@@ -23,6 +23,8 @@ Pre-release versions (`0.2.0-beta.1`) are published with the `next` dist-tag and
 
 The version in `package.json` is the only place to change: the build injects it into the `client` field (`widget@x.y.z`).
 
+If `Publish to npm` fails with `ENEEDAUTH`, npm refused trusted publishing: check that the trusted-publisher entry (step 8) matches exactly and has **Allow npm publish** ticked, then use **Re-run failed jobs** on the same run. No new tag is needed.
+
 If `verify` fails, nothing is published. Fix on `main`, delete the tag (`git push --delete origin v0.1.0 && git tag -d v0.1.0`) and tag again. A version that reached npm cannot be re-published; release a new patch instead.
 
 ## One-time setup (maintainer)
@@ -51,6 +53,7 @@ npm only lets you configure trusted publishing on a package that already exists,
    - Release 0.1.0 as above.
 8. npmjs.com → `@user-reactions/widget` → Settings → Trusted publishing → GitHub Actions:
    - Owner `atuuri`, repository `user-reactions-widget`, workflow `release.yml`, environment `npm-publish`.
+   - Tick **Allow npm publish** and save. Without it the workflow matches but may not publish, and the `Publish to npm` step fails with `ENEEDAUTH`.
    - Then set publishing access to "Require two-factor authentication and disallow tokens".
 9. Delete the `NPM_TOKEN` environment secret and revoke the token on npm. Later releases use trusted publishing (OIDC); no token is stored anywhere.
 
