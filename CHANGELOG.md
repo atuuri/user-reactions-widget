@@ -2,7 +2,7 @@
 
 All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.1.0-beta.3
 
 ### Added
 - `type="csat"` (1–5) and `type="ces"` (1–7). Buttons are labelled "1 of 5 – very dissatisfied" and so on, with captions under the ends of the scale (styling part `scale-label`). `comment="on-negative"` opens the comment box for CSAT 1–2 and CES 1–3.
