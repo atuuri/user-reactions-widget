@@ -74,7 +74,7 @@ export interface Mounted {
   el: HTMLElement;
   sr: ShadowRoot;
   events: { type: string; detail: any }[];
-  btn: (score: 0 | 1) => HTMLButtonElement;
+  btn: (score: number) => HTMLButtonElement;
   q: <T extends Element = HTMLElement>(sel: string) => T;
   form: () => HTMLFormElement;
   thanks: () => HTMLElement;

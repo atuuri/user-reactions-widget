@@ -43,6 +43,20 @@
         style="--ur-accent: #c026d3; --ur-radius: 12px"></user-reactions>
     </div>
 
+    <h2>CSAT, comment on 1–2</h2>
+    <div class="box">
+      <p>Your order has been placed.</p>
+      <user-reactions project-key="pk_embed_test" type="csat" surface="checkout" subject="order-confirmation"
+        comment="on-negative" endpoint="/mock"></user-reactions>
+    </div>
+
+    <h2>CES, optional comment</h2>
+    <div class="box">
+      <p>Your address was updated.</p>
+      <user-reactions project-key="pk_embed_test" type="ces" surface="support-flow" subject="change-address"
+        comment="optional" endpoint="/mock"></user-reactions>
+    </div>
+
     <h2>API failure (mock answers 503)</h2>
     <div class="box">
       <p>Click a thumb: one retry after 1 s, then an <code>error</code> event. The page keeps working.</p>

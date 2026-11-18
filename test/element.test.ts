@@ -389,7 +389,7 @@ describe('attributes', () => {
     [{ surface: 'x'.repeat(101) }, 'surface is required (max 100 characters)'],
     [{ subject: 'x'.repeat(201) }, 'subject is too long (max 200 characters)'],
     [{ type: null }, 'type "" is not supported'],
-    [{ type: 'csat' }, 'type "csat" is not supported'],
+    [{ type: 'nps' }, 'type "nps" is not supported'],
   ])('invalid %o fires invalid-attribute and renders nothing', async (attrs, message) => {
     const net = mockFetch();
     const m = mount(attrs);

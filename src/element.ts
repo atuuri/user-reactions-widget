@@ -48,6 +48,12 @@ export function parseMeta(raw: string): Meta | undefined {
   }
 }
 
+/** Scale size for csat/ces, and the highest score that counts as negative for comment="on-negative". */
+const MAX: Record<FeedbackType, number> = { thumbs: 2, csat: 5, ces: 7 };
+const NEG: Record<FeedbackType, number> = { thumbs: 0, csat: 2, ces: 3 };
+
+const cap = (t: string) => t[0].toUpperCase() + t.slice(1);
+
 // Own thumb glyph; the "down" button rotates it.
 const ICON =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h4v11H3zM7 10l4-8c1.7 0 3 1.3 3 3v4h5.5c1.4 0 2.4 1.3 2.1 2.6l-1.6 7.5c-.2 1.1-1.2 1.9-2.3 1.9H7"/></svg>';
@@ -57,7 +63,9 @@ const LINE = 'border:1px solid #8888;border:1px solid color-mix(in srgb,currentC
 const CSS =
   `:host{display:block;font-family:var(--ur-font,inherit);color:var(--ur-text,inherit)}:host([hidden]){display:none}` +
   `.r{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ur-gap,.5em)}` +
-  `[part=question]{color:var(--ur-muted,inherit)}` +
+  `[part=question],[part=scale-label]{color:var(--ur-muted,inherit)}` +
+  `.s{align-items:baseline}.g{display:inline-flex;flex-direction:column;gap:.25em}.g>.r{flex-wrap:nowrap;gap:.3em}.n{min-width:2.2em;padding:.3em 0;justify-content:center}` +
+  `[part=scale-label]{display:flex;justify-content:space-between;gap:1em;font-size:.8em}` +
   `button{${LINE};display:inline-flex;align-items:center;padding:.3em .55em;line-height:1;cursor:pointer}` +
   `button:hover{border-color:currentColor}[aria-disabled=true]{cursor:default;opacity:.7}` +
   `[aria-pressed=true]{border-color:var(--ur-accent,currentColor);color:var(--ur-accent,inherit)}` +
@@ -125,7 +133,7 @@ export class UserReactionsElement extends Base {
         ? 'surface is required (max 100 characters)'
         : (subject?.length ?? 0) > 200
           ? 'subject is too long (max 200 characters)'
-          : type != 'thumbs'
+          : !type || !(type in MAX)
             ? `type "${type ?? ''}" is not supported`
             : '';
     if (problem) return this.fail('invalid-attribute', problem);
@@ -148,19 +156,34 @@ export class UserReactionsElement extends Base {
     };
     this.fid = uuid();
 
+    // Thumbs: 👍 (1) then 👎 (0). Scales: 1..max, one Tab stop (roving tabindex) and end captions.
+    const scale = type != 'thumbs';
+    const max = MAX[type!];
+    const values = scale ? Array.from({ length: max }, (_, i) => i + 1) : [1, 0];
+    const buttons = values
+      .map((v) => `<button part="button" data-s="${v}" aria-pressed="false"${scale ? ` class="n" tabindex="${v == 1 ? 0 : -1}">${v}` : `>${ICON}`}</button>`)
+      .join('');
     sr.innerHTML =
-      `<style>${CSS}</style><div class="r"><span part="question" id="q"></span>` +
-      `<span class="r" role="group" aria-labelledby="q"><button part="button" data-s="1" aria-pressed="false">${ICON}</button>` +
-      `<button part="button" data-s="0" aria-pressed="false">${ICON}</button></span>` +
-      `<span part="thanks" role="status"></span></div>` +
+      `<style>${CSS}</style><div class="r${scale ? ' s' : ''}"><span part="question" id="q"></span>` +
+      `<span class="g" role="group" aria-labelledby="q"><span class="r">${buttons}</span>` +
+      (scale ? `<span part="scale-label" aria-hidden="true"><span></span><span></span></span>` : '') +
+      `</span><span part="thanks" role="status"></span></div>` +
       `<form hidden><textarea part="comment" maxlength="2000"></textarea><button part="send" type="submit"></button></form>`;
 
     // question="" shows only the buttons; the hidden text still labels the group for screen readers.
     const q = this.$('[part=question]');
-    q.textContent = this.attr('question') || s.thumbs;
+    q.textContent = this.attr('question') || s[type!];
     q.hidden = this.getAttribute('question')?.trim() === '';
+    const points = type == 'csat' ? s.csatPoints : s.cesPoints;
+    if (scale) {
+      const [lo, hi] = this.sr!.querySelectorAll('[part=scale-label] span');
+      lo.textContent = cap(points[0]);
+      hi.textContent = cap(points[max - 1]);
+      this.$('.g').addEventListener('keydown', (e) => this.guard(() => this.key(e as KeyboardEvent)));
+    }
     for (const b of this.buttons()) {
-      const label = b.dataset.s == '1' ? s.up : s.down;
+      const v = +b.dataset.s!;
+      const label = scale ? `${v} ${s.of} ${max} – ${points[v - 1]}` : v ? s.up : s.down;
       b.setAttribute('aria-label', label);
       b.title = label;
       b.addEventListener('click', () => this.guard(() => this.rate(+b.dataset.s!)));
@@ -181,6 +204,24 @@ export class UserReactionsElement extends Base {
 
   private buttons() {
     return this.sr!.querySelectorAll<HTMLButtonElement>('[data-s]');
+  }
+
+  /** Scales only: arrows move between buttons, Home/End jump to the ends. Enter/Space are native. */
+  private key(e: KeyboardEvent) {
+    const bs = [...this.buttons()];
+    const i = bs.indexOf(this.sr!.activeElement as HTMLButtonElement);
+    const k = e.key;
+    const j = k == 'ArrowRight' || k == 'ArrowDown' ? i + 1 : k == 'ArrowLeft' || k == 'ArrowUp' ? i - 1 : k == 'Home' ? 0 : k == 'End' ? bs.length - 1 : null;
+    if (i < 0 || j == null) return;
+    e.preventDefault();
+    const t = bs[Math.max(0, Math.min(bs.length - 1, j))];
+    this.rove(t);
+    t.focus();
+  }
+
+  /** Scales keep a single Tab stop on the focused or selected button. */
+  private rove(target: HTMLButtonElement) {
+    if (this.c!.type != 'thumbs') for (const b of this.buttons()) b.tabIndex = b === target ? 0 : -1;
   }
 
   private watch() {
@@ -236,8 +277,9 @@ export class UserReactionsElement extends Base {
       const on = +b.dataset.s! === score;
       b.setAttribute('aria-pressed', String(on));
       b.setAttribute('part', on ? 'button button-selected' : 'button');
+      if (on) this.rove(b);
     }
-    const ask = c.mode == 'optional' || (c.mode == 'on-negative' && score == 0);
+    const ask = c.mode == 'optional' || (c.mode == 'on-negative' && score <= NEG[c.type]);
     this.$('form').hidden = !ask;
     this.$('[part=thanks]').textContent = ask ? '' : c.s.thanks;
     this.emit<RatedDetail>('rated', { id: this.fid, type: c.type, score, surface: c.surface, subject: c.subject });

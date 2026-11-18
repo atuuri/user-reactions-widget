@@ -47,6 +47,12 @@ The tag name `user-reactions` matches the repo name and the npm org; the package
 | `csat` | 1–5 | 1–5, 5 = very satisfied |
 | `ces` | 1–7 | 1–7, 7 = very easy |
 
+Scale buttons show the number and are labelled "`n` of `max` – `point`" (also the tooltip). Points, lowest first:
+- `csat`: very dissatisfied, dissatisfied, neutral, satisfied, very satisfied.
+- `ces`: very difficult, difficult, somewhat difficult, neither easy nor difficult, somewhat easy, easy, very easy.
+
+Captions under the first and last button name the ends ("Very dissatisfied" … "Very satisfied"), so the direction is clear without hovering. They are hidden from screen readers, which already hear the button labels.
+
 ### Default strings
 
 | Key | en | fi | sv |
@@ -58,7 +64,7 @@ The tag name `user-reactions` matches the repo name and the npm org; the package
 | send | Send | Lähetä | Skicka |
 | thanks | Thanks for your feedback | Kiitos palautteestasi | Tack för din feedback |
 
-Native-speaker review of fi/sv strings before first pilot.
+Only English is built in so far: the fi and sv columns ship with M3, and need a native-speaker review before the first pilot. Until then `lang` is sent as `locale` but the text stays English.
 
 ## Behaviour
 
@@ -109,28 +115,28 @@ Same payload and endpoint as the element, with `client: "headless@<version>"` in
 ## Styling
 
 - CSS custom properties: `--ur-font`, `--ur-text`, `--ur-muted`, `--ur-accent`, `--ur-bg`, `--ur-radius`, `--ur-gap`.
-- Parts: `question`, `button`, `button-selected`, `comment`, `send`, `thanks`.
+- Parts: `question`, `button`, `button-selected`, `scale-label` (csat/ces end captions), `comment`, `send`, `thanks`.
 - Inherit font by default; looks native in light and dark host pages.
-- Compact by default (one line for thumbs).
+- Compact by default (one line for thumbs; scales add a caption line under the buttons).
 
 ## Accessibility
 
 - Buttons have labels (e.g. "Helpful", "Not helpful", "1 of 5 – very dissatisfied").
 - `aria-pressed` on the selected button.
-- Arrow keys move between scale buttons; Enter/Space selects.
+- Scales (`csat`, `ces`) are one Tab stop: Tab lands on the selected button, or the first one. ←/→ (and ↑/↓) move focus between scale buttons without selecting; Home/End jump to the ends; Enter/Space select. Thumbs keep both buttons in the Tab order.
 - Thanks state is announced with `role="status"`.
 
 ## Dev setup
 
 - `npm run dev` serves `demo/index.html` with four examples (thumbs in a fake chat list, thumbs at the end of a knowledge-base article, CSAT, CES) and a mock endpoint that logs payloads to the console and the page.
 - Mock endpoint: `POST /mock/v1/feedback` and `/mock/v1/impressions` answer 202, or 400 if the body breaks `docs/api/openapi.yaml`. `/mock/fail/v1/*` answers 503 to exercise the retry and error path.
-- `demo/embed.html` loads the built `dist/user-reactions.js` with one script tag on a plain page (run `npm run build` first). M1 ships the thumbs example only; CSAT and CES examples arrive with M2.
+- `demo/embed.html` loads the built `dist/user-reactions.js` with one script tag on a plain page (run `npm run build` first). It covers thumbs, CSAT and CES.
 
 ## Milestones
 
-1. **M1 Thumbs**: element with `thumbs`, impressions, comment modes, events, headless client, demo page, tests, size check, README. English strings only; other `type` values fire `invalid-attribute` until M2.
-2. **M2 Scales**: `csat` and `ces`, keyboard navigation for scales, fi/sv strings.
-3. **M3 Polish**: dark-mode check, reduced motion, attribute-reset behaviour, publish to npm as `@user-reactions/widget` 0.1.0 (see `docs/releasing.md`).
+1. **M1 Thumbs**: element with `thumbs`, impressions, comment modes, events, headless client, demo page, tests, size check, README. English strings only.
+2. **M2 Scales**: `csat` and `ces`, keyboard navigation for scales. Unknown `type` values fire `invalid-attribute`.
+3. **M3 Polish**: fi/sv strings (moved from M2), dark-mode check, reduced motion, attribute-reset behaviour, publish to npm as `@user-reactions/widget` 0.1.0 (see `docs/releasing.md`).
 
 ## Acceptance criteria (M1)
 
@@ -141,6 +147,15 @@ Same payload and endpoint as the element, with `client: "headless@<version>"` in
 - Network failure fires `user-reactions:error` and does not throw.
 - IIFE bundle ≤ 8 kB min+gzip.
 - Tests cover payload shape against `docs/api/openapi.yaml` examples.
+
+## Acceptance criteria (M2)
+
+- `type="csat"` shows buttons 1–5 and sends scores 1–5; `type="ces"` shows 1–7 and sends 1–7, with labels and end captions as above.
+- `comment="on-negative"` shows the comment box for CSAT 1–2 and CES 1–3, and not for higher scores.
+- Changing a scale rating re-sends with the same `id`; impressions, events, retry and `question=""` behave as for thumbs.
+- A scale is one Tab stop; arrow keys and Home/End move focus within it; Enter/Space select.
+- A CES rating from the element matches the `ces` example in `docs/api/openapi.yaml`.
+- The built IIFE renders CSAT and CES on a plain HTML page and stays ≤ 8 kB min+gzip.
 
 ## Out of scope
 
