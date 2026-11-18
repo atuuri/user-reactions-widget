@@ -48,6 +48,38 @@ describe('the validator', () => {
     const { surface: _, ...rest } = thumbsDown;
     expect(validateRequest('/v1/feedback', rest)).toEqual(['body: missing required "surface"']);
   });
+
+  it('rejects a rating without a score', () => {
+    const { score: _, ...rest } = thumbsDown;
+    expect(validateRequest('/v1/feedback', rest)).toEqual(['body: missing required "score"']);
+  });
+
+  it('rejects an empty comment', () => {
+    expect(validateRequest('/v1/feedback', { ...thumbsDown, comment: '' })).toEqual(['body.comment: shorter than 1']);
+  });
+});
+
+describe('suggestions (M4 contract)', () => {
+  const suggestion = feedback.examples.suggestion as Record<string, any>;
+
+  it('the example is a suggestion with a comment and no score', () => {
+    expect(suggestion.type).toBe('suggestion');
+    expect(suggestion).not.toHaveProperty('score');
+    expect(validateRequest('/v1/feedback', suggestion)).toEqual([]);
+  });
+
+  it('rejects a suggestion with a score', () => {
+    expect(validateRequest('/v1/feedback', { ...suggestion, score: 1 })).toEqual(['body.score: not allowed']);
+  });
+
+  it('rejects a suggestion without a comment', () => {
+    const { comment: _, ...rest } = suggestion;
+    expect(validateRequest('/v1/feedback', rest)).toEqual(['body: missing required "comment"']);
+  });
+
+  it('accepts a suggestion impression', () => {
+    expect(validateRequest('/v1/impressions', { type: 'suggestion', surface: 'billing', client: 'widget@0.2.0' })).toEqual([]);
+  });
 });
 
 describe('payloads match the spec examples', () => {

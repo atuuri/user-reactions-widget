@@ -19,6 +19,7 @@ export const spec: Schema = parse(readFileSync(SPEC_PATH, 'utf8'));
 const KNOWN = new Set([
   '$ref', 'type', 'required', 'properties', 'additionalProperties', 'enum',
   'minimum', 'maximum', 'minLength', 'maxLength', 'maxProperties', 'format', 'description',
+  'const', 'if', 'then', 'else',
 ]);
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -27,19 +28,24 @@ function resolve(s: Schema): Schema {
   return (s.$ref as string).replace(/^#\//, '').split('/').reduce((o: Schema, k) => o[k], spec);
 }
 
-function check(schema: Schema, v: unknown, at: string, out: string[]) {
+function check(schema: Schema | boolean, v: unknown, at: string, out: string[]) {
+  // Boolean schemas: `false` forbids the value (e.g. `score: false` for suggestions), `true` allows anything.
+  if (schema === false) return void out.push(`${at}: not allowed`);
+  if (schema === true) return;
   const s = resolve(schema);
   for (const k of Object.keys(s)) if (!KNOWN.has(k)) out.push(`${at}: unsupported schema keyword "${k}"`);
   const t = s.type;
-  if (t == 'object') {
-    if (!v || typeof v != 'object' || Array.isArray(v)) return void out.push(`${at}: expected object`);
+  const isObject = !!v && typeof v == 'object' && !Array.isArray(v);
+  // Untyped schemas (if/then/else branches) still apply their object keywords to objects.
+  if (t == 'object' || (t == null && isObject && (s.required || s.properties))) {
+    if (!isObject) return void out.push(`${at}: expected object`);
     const o = v as Record<string, unknown>;
     const keys = Object.keys(o);
     for (const r of s.required ?? []) if (!(r in o)) out.push(`${at}: missing required "${r}"`);
     if (s.maxProperties != null && keys.length > s.maxProperties) out.push(`${at}: more than ${s.maxProperties} properties`);
     for (const k of keys) {
-      const p = s.properties?.[k];
-      if (p) check(p, o[k], `${at}.${k}`, out);
+      // `in`, not truthiness: a `false` property schema must still be checked (it forbids the key).
+      if (s.properties && k in s.properties) check(s.properties[k], o[k], `${at}.${k}`, out);
       else if (s.additionalProperties === false) out.push(`${at}: unexpected property "${k}"`);
       else if (typeof s.additionalProperties == 'object') check(s.additionalProperties, o[k], `${at}.${k}`, out);
     }
@@ -56,6 +62,14 @@ function check(schema: Schema, v: unknown, at: string, out: string[]) {
     out.push(`${at}: unsupported type "${t}"`);
   }
   if (s.enum && !s.enum.includes(v)) out.push(`${at}: not one of ${s.enum.join(', ')}`);
+  if ('const' in s && v !== s.const) out.push(`${at}: must be ${JSON.stringify(s.const)}`);
+  // if/then/else: the `if` schema only decides which branch applies; its own errors are discarded.
+  if (s.if) {
+    const probe: string[] = [];
+    check(s.if, v, at, probe);
+    const branch = probe.length ? s.else : s.then;
+    if (branch !== undefined) check(branch, v, at, out);
+  }
 }
 
 /** Request body content for `POST <path>` (e.g. "/v1/feedback"). */

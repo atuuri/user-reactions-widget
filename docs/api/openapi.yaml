@@ -1,7 +1,7 @@
 openapi: 3.1.0
 info:
   title: Feedback ingest API
-  version: 0.1.0
+  version: 0.2.0
   description: >
     Public, write-only API used by the widget and the headless client.
     Authenticated with a public project key. Must allow CORS from any origin.
@@ -42,6 +42,15 @@ paths:
                   surface: checkout
                   locale: en
                   client: widget@0.1.0
+              suggestion:
+                value:
+                  id: 3f6b2c7e-8a1d-4e5f-9b2a-6c4d8e0f1a23
+                  type: suggestion
+                  surface: billing
+                  subject: invoices-page
+                  comment: Let me export invoices as CSV.
+                  locale: en
+                  client: widget@0.2.0
       responses:
         "202":
           description: Accepted
@@ -84,7 +93,17 @@ components:
     Feedback:
       type: object
       additionalProperties: false
-      required: [id, type, score, surface]
+      description: >
+        A rating (thumbs, csat, ces) carries a score and an optional comment.
+        A suggestion is free text with no rating: comment is required and score is not allowed.
+      required: [id, type, surface]
+      if:
+        properties: { type: { const: suggestion } }
+      then:
+        required: [comment]
+        properties: { score: false }
+      else:
+        required: [score]
       properties:
         id:
           type: string
@@ -92,10 +111,10 @@ components:
           description: Client-generated. Re-posting the same id updates the item.
         type:
           type: string
-          enum: [thumbs, csat, ces]
+          enum: [thumbs, csat, ces, suggestion]
         score:
           type: integer
-          description: thumbs 0–1, csat 1–5, ces 1–7. Server validates range per type.
+          description: thumbs 0–1, csat 1–5, ces 1–7. Server validates range per type. Not sent for suggestion.
           minimum: 0
           maximum: 7
         surface: { type: string, minLength: 1, maxLength: 100 }
@@ -104,7 +123,7 @@ components:
           type: object
           maxProperties: 20
           additionalProperties: { type: string, maxLength: 200 }
-        comment: { type: string, maxLength: 2000 }
+        comment: { type: string, minLength: 1, maxLength: 2000 }
         locale: { type: string, maxLength: 10 }
         client: { type: string, maxLength: 50, description: "widget@<version> or headless@<version>, e.g. widget@0.1.0" }
     Impression:
@@ -114,7 +133,7 @@ components:
       properties:
         type:
           type: string
-          enum: [thumbs, csat, ces]
+          enum: [thumbs, csat, ces, suggestion]
         surface: { type: string, minLength: 1, maxLength: 100 }
         subject: { type: string, maxLength: 200 }
         client: { type: string, maxLength: 50 }
