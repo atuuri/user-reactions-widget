@@ -121,12 +121,11 @@ CI (`.github/workflows/ci.yml`) runs typecheck, tests, build, size and package c
 
 ## Releasing
 
-Releases are published from CI when a version tag is pushed, after approval:
+Releases are published from CI when the maintainer pushes a version tag, after approval:
 
-```sh
-npm version 0.1.0        # bumps package.json, commits, tags v0.1.0
-git push --follow-tags   # Release workflow: verify → approve → npm + GitHub Release
-```
+1. A `Release x.y.z` PR bumps the version (`npm version x.y.z --no-git-tag-version`) and the changelog heading.
+2. After it is merged, the maintainer runs `git tag vx.y.z && git push origin vx.y.z` on `main`.
+3. The Release workflow verifies, waits for approval, then publishes to npm and creates the GitHub Release.
 
 One-time setup and details: [`docs/releasing.md`](docs/releasing.md). Changes are listed in [`CHANGELOG.md`](CHANGELOG.md).
 
