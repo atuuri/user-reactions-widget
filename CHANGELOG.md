@@ -2,6 +2,11 @@
 
 All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
+### Docs
+- Trimmed the docs: `docs/widget.md` is the single reference (README links to it), M4 moved to `docs/m4-suggestions.md`, shorter `docs/releasing.md`.
+
 ## 0.1.0-beta.3
 
 ### Added
