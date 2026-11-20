@@ -1,71 +1,34 @@
 # Releasing
 
-`@user-reactions/widget` is published to npm by `.github/workflows/release.yml` when a version tag is pushed. The CDN (jsDelivr, unpkg) serves the npm files automatically, and the workflow also creates a GitHub Release with the built files and an SRI hash.
-
-```
-git push v0.1.0 ─► verify (tag = package.json, tag on main, typecheck, tests, build, size, pack check)
-               ─► wait for approval (npm-publish environment)
-               ─► npm publish (files from verify) ─► GitHub Release with CDN URL + integrity hash
-```
-
-Pre-release versions (`0.2.0-beta.1`) are published with the `next` dist-tag and marked as pre-releases, so they never become the default install.
+`.github/workflows/release.yml` publishes `@user-reactions/widget` to npm when a `v*` tag is pushed: verify (tag = package.json, tag on main, typecheck, tests, build, size, pack check) → wait for approval in the `npm-publish` environment → npm publish via trusted publishing (OIDC, no stored token) → GitHub Release with the CDN URL and SRI hash. jsDelivr and unpkg serve the npm files automatically. Pre-releases (`0.2.0-beta.1`) get the `next` dist-tag and never become the default install.
 
 ## Every release
 
-`main` requires a pull request and only the maintainer can push `v*` tags, so a release is a version-bump PR followed by a tag push.
-
-1. **Release PR.** From an up-to-date `main`, on a branch such as `release-0.1.0`:
+1. **Release PR** from an up-to-date `main`, on a branch such as `release-0.1.0`:
    ```sh
    npm version 0.1.0 --no-git-tag-version   # or: patch | minor | prerelease --preid beta
    ```
-   In `CHANGELOG.md`, rename `## Unreleased` to `## 0.1.0`. Run `npm ci`, `npm run typecheck`, `npm test`, `npm run build` and `npm run pack:check`, then open a PR titled `Release 0.1.0` and merge it once `Test (Node 22)` and `Test (Node 24)` pass.
-2. **Tag (maintainer only).** From the updated `main`:
+   Rename `## Unreleased` to `## 0.1.0` in `CHANGELOG.md`. Run `npm ci`, `npm run typecheck`, `npm test`, `npm run build`, `npm run pack:check`. Open `Release 0.1.0`; merge once `Test (Node 22)` and `Test (Node 24)` pass.
+2. **Tag (maintainer only)**, from the updated `main`:
    ```sh
    git checkout main && git pull
    node -p "require('./package.json').version"   # must print 0.1.0
    git tag v0.1.0 && git push origin v0.1.0
    ```
-   The tag ruleset refuses this push for anyone else, including bots.
-3. **Approve.** In GitHub → Actions → Release, wait for `verify`, then **Review deployments** → approve `npm-publish`.
-4. **Check** https://www.npmjs.com/package/@user-reactions/widget (`npm view @user-reactions/widget dist-tags`) and the GitHub release. A new version can take a few minutes to appear on npm.
-5. Add a new `## Unreleased` heading to `CHANGELOG.md` with the next change.
+3. **Approve**: GitHub → Actions → Release → after `verify`, **Review deployments** → approve `npm-publish`.
+4. **Check** `npm view @user-reactions/widget dist-tags` and the GitHub release (npm can lag a few minutes).
+5. Add a new `## Unreleased` heading to `CHANGELOG.md`.
 
-The version in `package.json` is the only place to change: the build injects it into the `client` field (`widget@x.y.z`).
+`package.json` is the only place the version lives; the build injects it into `client` (`widget@x.y.z`).
 
-If `Publish to npm` fails with `ENEEDAUTH`, npm refused trusted publishing: check that the trusted-publisher entry (step 8) matches exactly and has **Allow npm publish** ticked, then use **Re-run failed jobs** on the same run. No new tag is needed.
+**If something fails**
+- `verify` fails: nothing is published. Fix via PR, then `git push --delete origin v0.1.0 && git tag -d v0.1.0` and tag again.
+- `Publish to npm` fails with `ENEEDAUTH`: the npm trusted-publisher entry does not match or lacks **Allow npm publish**. Fix it, then **Re-run failed jobs** (no new tag).
+- A version that reached npm cannot be re-published; release a new patch.
 
-If `verify` fails, nothing is published. Fix on `main` through a PR, then the maintainer deletes the tag (`git push --delete origin v0.1.0 && git tag -d v0.1.0`) and tags again. A version that reached npm cannot be re-published; release a new patch instead.
+## One-time setup (for reference)
 
-## One-time setup (maintainer)
-
-These need the maintainer's npm and GitHub accounts; they cannot be done from the repository.
-
-### npm
-1. npm account with two-factor authentication.
-2. npm organisation `user-reactions` (free plan), with "require 2FA" for members.
-
-### GitHub repository settings
-3. **Environment** (Settings → Environments → New environment): `npm-publish`.
-   - Required reviewers: the maintainer.
-   - Deployment branches and tags: "Selected", add tag rule `v*`.
-4. **Ruleset for `main`** (Settings → Rules → Rulesets): require a pull request (0 required approvals for a single maintainer, who cannot approve their own PRs) and the status checks `Test (Node 22)` and `Test (Node 24)`.
-5. **Ruleset for tags `v*`**: restrict creation, update and deletion; bypass list: the maintainer. Without this, anyone with write access could start a release.
-6. **Keep the repository public.** Provenance (the npm badge proving the package was built here) only works from public repositories, and the package's repository link must resolve. If it were made private, releases would still publish, but without provenance.
-
-### First publish (bootstrap)
-npm only lets you configure trusted publishing on a package that already exists, so the first release uses a short-lived token. If npm offers trusted publishing for a not-yet-published package, skip steps 7 and 9 and do step 8 first.
-
-7. npmjs.com → Access Tokens → Generate New Token → Granular:
-   - Expiration: 1 day. Permissions: read and write on the `user-reactions` organisation's packages.
-   - Enable "bypass two-factor authentication" (needed for CI).
-   - Store it as secret `NPM_TOKEN` in the `npm-publish` **environment** (not a repository secret).
-   - Release 0.1.0 as above.
-8. npmjs.com → `@user-reactions/widget` → Settings → Trusted publishing → GitHub Actions:
-   - Owner `atuuri`, repository `user-reactions-widget`, workflow `release.yml`, environment `npm-publish`.
-   - Tick **Allow npm publish** and save. Without it the workflow matches but may not publish, and the `Publish to npm` step fails with `ENEEDAUTH`.
-   - Then set publishing access to "Require two-factor authentication and disallow tokens".
-9. Delete the `NPM_TOKEN` environment secret and revoke the token on npm. Later releases use trusted publishing (OIDC); no token is stored anywhere.
-
-### Optional
-- Grant teams access to the package in the npm org (only possible once it exists).
-- Merge Dependabot PRs (`.github/dependabot.yml`) to keep actions and dev tools current. For stricter supply-chain hygiene, pin actions to commit SHAs; Dependabot keeps pinned SHAs updated too.
+- **npm**: account with 2FA; org `user-reactions` requiring 2FA. Package → Settings → Trusted publishing → GitHub Actions: owner `atuuri`, repo `user-reactions-widget`, workflow `release.yml`, environment `npm-publish`, **Allow npm publish** ticked; publishing access "Require 2FA and disallow tokens". The bootstrap `NPM_TOKEN` (needed only for the very first publish) should be deleted from the environment and revoked on npm.
+- **GitHub**: environment `npm-publish` with the maintainer as required reviewer and deployment tag rule `v*`. Ruleset on `main`: PR required (0 approvals) plus checks `Test (Node 22)` and `Test (Node 24)`. Ruleset on tags `v*`: restrict create/update/delete, bypass = maintainer only.
+- **Keep the repo public**: npm provenance only works from public repositories.
+- Optional: merge Dependabot PRs; pin actions to commit SHAs for stricter supply-chain hygiene.
