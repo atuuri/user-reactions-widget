@@ -78,13 +78,18 @@
       #log .s4, #log .s5, #log .err { color: var(--bad); }
       #log .ev { color: var(--accent); }
       #log pre { margin: 4px 0 0; white-space: pre-wrap; color: var(--muted); }
+      .dark { background: #0f1216; color: #e6e8eb; border: 1px solid #2c333c; border-radius: 12px; padding: 18px 20px; max-width: 46em; display: grid; gap: 22px; }
+      .dark p { margin: 0 0 10px; }
+      .dark h3 { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: #9aa4b2; margin: 0 0 8px; }
+      .dark .more { background: none; border-color: #4a5360; }
+      .dark .themed { --ur-text: #e6e8eb; --ur-muted: #a7b0bd; --ur-accent: #7aa2ff; --ur-bg: #161b22; --ur-radius: 999px; }
     </style>
   </head>
   <body>
     <header>
       <h1>&lt;user-reactions&gt; demo</h1>
       <a href="/demo/embed.html" style="font-size: 13px; color: var(--accent)">Test the built bundle →</a>
-      <p>Thumbs under AI chat answers and a help article, CSAT after checkout and CES after a support flow. Scroll to trigger impressions; try the arrow keys on a scale.</p>
+      <p>Thumbs under AI chat answers and a help article, CSAT after checkout, CES after a support flow, and a dark page in Finnish and Swedish. Scroll to trigger impressions; try the arrow keys on a scale.</p>
       <label><input type="checkbox" id="outage" /> Simulate API outage (503)</label>
     </header>
     <main>
@@ -154,6 +159,28 @@
               subject="change-address"
               comment="optional"
               endpoint="/mock"></user-reactions>
+          </div>
+        </section>
+
+        <section aria-labelledby="h-dark">
+          <h2 class="example" id="h-dark">Dark page, Finnish and Swedish</h2>
+          <div class="dark">
+            <div>
+              <h3>No --ur-* variables · lang="fi"</h3>
+              <p>Colours follow the page text; borders and the focus ring use the text colour, GrayText where color-mix is unsupported.</p>
+              <user-reactions project-key="pk_demo_local" type="csat" surface="dark-demo" subject="dark-plain" comment="optional" lang="fi" endpoint="/mock"></user-reactions>
+            </div>
+            <div>
+              <h3>With --ur-* variables and a pill radius · lang="sv-SE"</h3>
+              <p>The comment box radius stays at 12px even though --ur-radius is 999px.</p>
+              <user-reactions class="themed" project-key="pk_demo_local" type="thumbs" surface="dark-demo" subject="dark-themed" comment="optional" lang="sv-SE" endpoint="/mock"></user-reactions>
+            </div>
+            <div>
+              <h3>Reused node · type="ces"</h3>
+              <p>Like a chat UI that reuses nodes: the button changes <code>subject</code>, which resets the element with a new id and a new impression.</p>
+              <user-reactions id="reused" project-key="pk_demo_local" type="ces" surface="dark-demo" subject="reused-1" comment="on-negative" endpoint="/mock"></user-reactions>
+              <p><button type="button" class="more" id="next-subject" style="margin-top: 10px">Next subject</button></p>
+            </div>
           </div>
         </section>
       </div>

@@ -28,7 +28,7 @@ Package `@user-reactions/widget`, served from npm by jsDelivr and unpkg. Pin the
 | `meta` | no | JSON object, string values, ≤ 20 keys | Model, prompt version, release, experiment. Invalid → ignored, `invalid-meta` fired. |
 | `comment` | no | `off` (default), `optional`, `on-negative` | `on-negative`: comment box only for thumbs down, CSAT 1–2, CES 1–3. |
 | `question` | no | string | Overrides the question. `question=""` hides it; the default text still labels the button group for screen readers. |
-| `lang` | no | `en` (default), `fi`, `sv` | Built-in strings. Sent as `locale`. |
+| `lang` | no | `en` (default), `fi`, `sv` | Built-in strings, matched by primary subtag (`fi-FI` → `fi`); other languages show English. Sent as `locale` as given. |
 | `endpoint` | yes, until the hosted API launches | URL | API base URL; the element appends `/v1/impressions` and `/v1/feedback`. Without it the element renders, but each request it would send fires `invalid-attribute` instead. |
 
 ### Scales and stored scores
@@ -56,7 +56,7 @@ Captions under the first and last button name the ends; they are `aria-hidden`, 
 | send | Send | Lähetä | Skicka |
 | thanks | Thanks for your feedback | Kiitos palautteestasi | Tack för din feedback |
 
-Only English is built in so far. M3 adds fi/sv for these and for the code-only strings ("Helpful" / "Not helpful", scale labels and end captions). Once M3 ships, `src/strings.ts` is the source and this table can go.
+`src/strings.ts` holds en, fi and sv for every visible string, including the code-only ones ("Helpful" / "Not helpful", scale labels and end captions); fi and sv await native-speaker review. This table can go once 0.1.0 ships.
 
 ## Behaviour
 
@@ -66,8 +66,8 @@ Only English is built in so far. M3 adds fi/sv for these and for the code-only s
 4. **Change rating**: another click re-sends with the **same `id`** (server upserts). Allowed until a comment is sent.
 5. **Comment** (if enabled for that score): textarea (max 2000 chars) and Send, which re-posts the same `id` with `comment`, then shows thanks.
 6. **Thanks**: without a comment box, thanks shows right after rating and the buttons stay usable. After a comment is sent, buttons are locked (`aria-disabled`). Send with an empty box just shows thanks.
-7. **Failure**: on a network error, 429 or 5xx, retry once after 1 s; other 4xx are not retried. If it still fails, fire `error` and keep the UI usable: the user can click again, a failed comment keeps its text. Never throw into the host page.
-8. **Attribute changes** (M3): changing `subject` or `meta` resets the element (new instance, new id). Needed for chat UIs that reuse nodes.
+7. **Failure**: on a network error, 429 or 5xx, retry once after 1 s; other 4xx are not retried. If it still fails, fire `error` and keep the UI usable: the thanks message is removed, the selection stays and clicking the same button again resends; a failed comment keeps its text. Never throw into the host page.
+8. **Attribute changes**: changing `subject`, `meta`, `type`, `lang`, `question` or `comment` resets the element as a new instance: new `id`, nothing selected, comment box and thanks cleared, and one new impression once visible. Needed for chat UIs that reuse nodes. Requests already sent keep their old `id` and no longer affect the UI. `endpoint` and `project-key` are read at send time and do not reset.
 
 Requests are JSON `POST`s with an `X-Project-Key` header, so browsers send a CORS preflight: the server must allow the page origin and the `Content-Type` and `X-Project-Key` headers.
 
@@ -104,7 +104,9 @@ Same payload and endpoint as the element, with `client: "headless@<version>"`. O
 
 - Custom properties: `--ur-font`, `--ur-text`, `--ur-muted`, `--ur-accent`, `--ur-bg`, `--ur-radius`, `--ur-gap`.
 - Parts: `question`, `button`, `button-selected`, `scale-label` (csat/ces end captions), `comment`, `send`, `thanks`.
-- Inherits font; looks native on light and dark pages. Compact: one line for thumbs, scales add a caption line.
+- Inherits font; looks native on light and dark pages. Colours derive from the text colour (borders at 50%, focus ring and selected state at full strength) unless `--ur-*` is set, with system colours (`GrayText`) as fallbacks. Compact: one line for thumbs, scales add a caption line.
+- The comment box radius is capped at 12 px, so a pill `--ur-radius` only rounds the buttons.
+- Transitions run only under `prefers-reduced-motion: no-preference`.
 
 ## Accessibility
 
@@ -116,7 +118,7 @@ Same payload and endpoint as the element, with `client: "headless@<version>"`. O
 
 1. **M1 Thumbs** – done (0.1.0-beta.1).
 2. **M2 Scales** – done (0.1.0-beta.3).
-3. **M3 Polish**, released as 0.1.0 (see `docs/releasing.md`):
+3. **M3 Polish**, released as 0.1.0 (see `docs/releasing.md`). Implemented; native review and the release are pending:
    - **fi/sv strings** for every visible string, including scale labels and captions. `lang` matches the primary subtag (`fi-FI` → `fi`); unknown languages fall back to English. Native-speaker review before the first pilot.
    - **Attribute reset** (behaviour 8): new `id`, nothing selected, comment box and thanks cleared, one new impression when visible. Changing `type`, `lang`, `question` or `comment` re-renders the same way.
    - **Dark-mode check** on dark pages, with and without `--ur-*`: borders, focus ring, selected state, captions, comment box. System colours as fallbacks.

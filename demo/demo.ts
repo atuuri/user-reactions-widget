@@ -74,6 +74,10 @@ outage.onchange = syncEndpoint;
 syncEndpoint();
 document.getElementById('clear')!.onclick = () => (log.textContent = '');
 
+// Reused node: a new subject resets the element (behaviour 8).
+let reused = 1;
+document.getElementById('next-subject')!.onclick = () => document.getElementById('reused')!.setAttribute('subject', `reused-${++reused}`);
+
 // Host reactions to widget events: after a thumbs down, the chat offers a new answer
 // and the help article offers a way to contact support.
 document.addEventListener('user-reactions:rated', (e) => {
