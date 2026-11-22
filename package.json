@@ -1,6 +1,6 @@
 {
   "name": "@user-reactions/widget",
-  "version": "0.1.0-beta.3",
+  "version": "0.1.0",
   "description": "Embeddable feedback element (thumbs, CSAT, CES) for AI answers and key product flows, plus a tiny headless client.",
   "license": "MIT",
   "repository": {
