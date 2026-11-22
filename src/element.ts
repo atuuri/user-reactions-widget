@@ -20,6 +20,9 @@ export interface CommentedDetail {
   id: string;
   comment: string;
 }
+export interface DismissedDetail {
+  reason: 'close' | 'done';
+}
 export interface ErrorDetail {
   code: ErrorCode;
   message: string;
@@ -57,14 +60,26 @@ const NEG: Record<RatingType, number> = { thumbs: 0, csat: 2, ces: 3 };
 const cap = (t: string) => t[0].toUpperCase() + t.slice(1);
 
 // Own thumb glyph; the "down" button rotates it.
+const X = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6 6 18"/></svg>';
 const ICON =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h4v11H3zM7 10l4-8c1.7 0 3 1.3 3 3v4h5.5c1.4 0 2.4 1.3 2.1 2.6l-1.6 7.5c-.2 1.1-1.2 1.9-2.3 1.9H7"/></svg>';
 
 // 50% of the text colour keeps borders at ≥ 3:1 on light and dark pages; GrayText where color-mix is unsupported.
 const LINE = 'border:1px solid GrayText;border:1px solid color-mix(in srgb,currentColor 50%,transparent);border-radius:var(--ur-radius,6px);background:var(--ur-bg,transparent);color:inherit;font:inherit';
 
+// Floating card: fixed to the inline-end bottom corner, opaque Canvas/CanvasText unless --ur-* is set.
+const F = ':host([placement=floating])';
+const OFF = 'var(--ur-offset,16px)';
+const SAFE = `calc(${OFF} + max(env(safe-area-inset-left,0px),env(safe-area-inset-right,0px)))`;
+
 const CSS =
   `:host{display:block;font-family:var(--ur-font,inherit);color:var(--ur-text,inherit)}:host([hidden]){display:none}` +
+  `${F}{position:fixed;z-index:var(--ur-z,2147483000);inset-block-end:calc(${OFF} + env(safe-area-inset-bottom,0px));inset-inline-end:${SAFE};` +
+  `box-sizing:border-box;max-width:min(30em,calc(100vw - 2*${OFF}));max-height:calc(100vh - 2*${OFF});overflow:auto;padding:1em 2.6em 1em 1em;` +
+  `background:var(--ur-bg,Canvas);color:var(--ur-text,CanvasText);border:1px solid GrayText;border:1px solid color-mix(in srgb,currentColor 50%,transparent);` +
+  `border-radius:min(var(--ur-radius,6px),12px);box-shadow:0 .25em 1em color-mix(in srgb,currentColor 20%,transparent)}` +
+  `@media (max-width:480px){${F}{inset-inline-start:${SAFE}}}` +
+  `.x{position:absolute;inset-block-start:.4em;inset-inline-end:.4em;padding:.25em;border-color:transparent}` +
   `.r{display:flex;flex-wrap:wrap;align-items:center;gap:var(--ur-gap,.5em)}` +
   `[part=question],[part=scale-label]{color:var(--ur-muted,inherit)}` +
   `.s{align-items:baseline}.g{display:inline-flex;flex-direction:column;gap:.25em}.g>.r{flex-wrap:nowrap;gap:.3em}.n{min-width:2.2em;padding:.3em 0;justify-content:center}` +
@@ -79,14 +94,15 @@ const CSS =
   `form[hidden]{display:none}textarea{${LINE};border-radius:min(var(--ur-radius,6px),12px);box-sizing:border-box;width:100%;min-height:4.5em;padding:.5em;resize:vertical}` +
   `textarea::placeholder{color:inherit;opacity:.7}` +
   `[part=thanks]:focus{outline:none}` +
-  `@media (prefers-reduced-motion:no-preference){button{transition:border-color .15s,box-shadow .15s,color .15s}.d{animation:f .25s}@keyframes f{from{opacity:0}}}`;
+  `@media (prefers-reduced-motion:no-preference){button{transition:border-color .15s,box-shadow .15s,color .15s}.d{animation:f .25s}${F}{animation:u .25s}` +
+  `@keyframes f{from{opacity:0}}@keyframes u{from{opacity:0;transform:translateY(1em)}}}`;
 
 // Lets `import "user-reactions"` succeed outside a browser (Node, SSR) for the headless client.
 const Base = (typeof HTMLElement == 'undefined' ? class {} : HTMLElement) as typeof HTMLElement;
 
 export class UserReactionsElement extends Base {
-  /** Behaviour 8: a change to any of these starts a new instance (new id, new impression). */
-  static observedAttributes = ['subject', 'meta', 'type', 'lang', 'question', 'comment'];
+  /** Behaviour 8: a change to any of these starts a new instance (new id, new impression). `placement` is observed but does not reset. */
+  static observedAttributes = ['subject', 'meta', 'type', 'lang', 'question', 'comment', 'placement'];
 
   private c?: Config;
   private fid = '';
@@ -99,28 +115,98 @@ export class UserReactionsElement extends Base {
   private sr?: ShadowRoot;
   /** Instance generation; responses for an earlier generation no longer touch the UI. */
   private gen = 0;
+  /** Floating: the thanks replaced the element (auto-hide applies), the pointer is over the card, the card was dismissed. */
+  private thanked = false;
+  private hover = false;
+  /** Last interaction with the card was a pointer: focus left there by a click does not hold off the auto-hide. */
+  private ptr = false;
+  private gone = false;
+  private timer?: ReturnType<typeof setTimeout>;
 
   connectedCallback() {
     this.guard(() => {
       if (!this.sr) {
-        this.sr = this.attachShadow({ mode: 'open' });
+        const sr = (this.sr = this.attachShadow({ mode: 'open' }));
+        // Floating card: Escape closes it (Escape in an open feedback box closes the box first);
+        // hover and focus hold off the auto-hide after thanks.
+        sr.addEventListener('keydown', (e) =>
+          this.guard(() => {
+            if ((e as KeyboardEvent).key != 'Escape') return;
+            const f = this.$('form');
+            if (this.c?.type == 'open' && f && !f.hidden && f.contains(e.target as Node)) this.expand(false);
+            else if (this.floating()) this.dismiss('close');
+          }),
+        );
+        const on = (t: string, fn: () => void) => this.addEventListener(t, () => this.guard(fn));
+        on('pointerenter', () => ((this.hover = true), this.arm()));
+        on('pointerleave', () => ((this.hover = false), this.arm()));
+        on('focusin', () => this.arm());
+        on('pointerdown', () => (this.ptr = true));
+        on('keydown', () => ((this.ptr = false), this.arm()));
+        on('focusout', () => setTimeout(() => this.guard(() => this.arm())));
         this.init();
-      }
+      } else if (this.gone) this.init(); // re-added after a dismissal: a new instance
+      this.arm();
       this.watch();
     });
   }
 
-  attributeChangedCallback(_name: string, old: string | null, value: string | null) {
+  attributeChangedCallback(name: string, old: string | null, value: string | null) {
     // Before the first connect, connectedCallback renders with the final attributes.
     if (old === value || !this.sr) return;
     this.guard(() => {
+      if (name == 'placement') return this.closer(), this.arm();
       this.init();
       if (this.isConnected) this.watch();
     });
   }
 
   disconnectedCallback() {
-    this.guard(() => this.unwatch());
+    this.guard(() => {
+      this.unwatch();
+      clearTimeout(this.timer);
+    });
+  }
+
+  /** The close button exists only while floating, last in the Tab order. */
+  private closer() {
+    const x = this.$('[part=close]');
+    if (!this.c || !this.floating()) return x?.remove();
+    if (x) return;
+    const b = document.createElement('button');
+    b.setAttribute('part', 'close');
+    b.className = 'x';
+    b.innerHTML = X;
+    b.title = this.c.s.close;
+    b.setAttribute('aria-label', b.title);
+    b.addEventListener('click', () => this.guard(() => this.dismiss('close')));
+    this.sr!.append(b);
+  }
+
+  private floating() {
+    return this.getAttribute('placement')?.trim() == 'floating';
+  }
+
+  /** Floating, after thanks replaced the element: hide about 4 s later, but not while hovered or keyboard-focused (the wait restarts after). */
+  private arm() {
+    clearTimeout(this.timer);
+    if (this.thanked && !this.gone && this.isConnected && this.floating() && !this.hover && !(this.sr!.activeElement && !this.ptr))
+      this.timer = setTimeout(() => this.guard(() => this.dismiss('done')), 4000);
+  }
+
+  /** Hides the floating card for this page view (fading out when motion is allowed) and fires `dismissed`. Nothing is stored. */
+  private dismiss(reason: DismissedDetail['reason']) {
+    if (this.gone) return;
+    this.gone = true;
+    clearTimeout(this.timer);
+    const hide = () => {
+      if (!this.gone) return; // reset while fading
+      this.hidden = true;
+      this.emit<DismissedDetail>('dismissed', { reason });
+    };
+    const a = typeof matchMedia == 'function' && matchMedia('(prefers-reduced-motion:no-preference)').matches && this.animate?.([{ opacity: 1 }, { opacity: 0 }], 200);
+    if (a) a.onfinish = hide;
+    else hide();
   }
 
   private attr(name: string) {
@@ -141,7 +227,7 @@ export class UserReactionsElement extends Base {
   private replace() {
     const sr = this.sr!;
     const focused = sr.activeElement;
-    this.done = true;
+    this.done = this.thanked = true;
     for (const n of sr.querySelectorAll('[part=question],[part=toggle],.g,form')) n.remove();
     const t = this.$('[part=thanks]');
     t.textContent = this.thx();
@@ -150,6 +236,7 @@ export class UserReactionsElement extends Base {
       t.tabIndex = -1;
       t.focus();
     }
+    this.arm();
   }
 
   private guard(fn: () => void) {
@@ -173,10 +260,12 @@ export class UserReactionsElement extends Base {
   private init() {
     const sr = this.sr!;
     this.unwatch();
+    clearTimeout(this.timer);
+    if (this.gone) this.hidden = false;
     this.gen++;
     this.c = undefined;
     this.score = null;
-    this.failed = this.done = this.seen = false;
+    this.failed = this.done = this.seen = this.thanked = this.gone = false;
     sr.innerHTML = '';
     const type = this.attr('type') as FeedbackType | undefined;
     const surface = this.attr('surface');
@@ -213,11 +302,13 @@ export class UserReactionsElement extends Base {
 
     const form = `<form ${ln} hidden><textarea part="comment" id="t" maxlength="2000"></textarea><button part="send" type="submit"></button></form>`;
     const ta = () => this.$<HTMLTextAreaElement>('textarea');
-    const onSubmit = () =>
+    const onSubmit = () => {
+      this.closer();
       this.$('form').addEventListener('submit', (e) => {
         e.preventDefault();
         this.submit().catch((err) => this.fail('internal', String(err?.message || err)));
       });
+    };
 
     // Open feedback: a toggle that shows the text box; no rating. The question attribute relabels the toggle.
     if (type == 'open') {
@@ -226,7 +317,6 @@ export class UserReactionsElement extends Base {
         `<span part="thanks" role="status"></span></div>${form}`;
       this.$('[part=toggle]').textContent = this.attr('question') || s.open;
       this.$('[part=toggle]').addEventListener('click', () => this.guard(() => this.expand(!!this.$('form').hidden)));
-      this.$('form').addEventListener('keydown', (e) => (e as KeyboardEvent).key == 'Escape' && this.guard(() => this.expand(false)));
       ta().placeholder = s.openPlaceholder;
       ta().setAttribute('aria-label', s.openPlaceholder);
       this.$('[part=send]').textContent = s.send;

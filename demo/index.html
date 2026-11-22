@@ -90,7 +90,7 @@
     <header>
       <h1>&lt;user-reactions&gt; demo</h1>
       <a href="/demo/embed.html" style="font-size: 13px; color: var(--accent)">Test the built bundle →</a>
-      <p>Thumbs under AI chat answers and a help article, CSAT after checkout, CES after a support flow, and a dark page. Pick a locale to set <code>lang</code> on every widget. Scroll to trigger impressions; try the arrow keys on a scale.</p>
+      <p>Thumbs under AI chat answers and a help article, CSAT after checkout, CES after a support flow, open feedback, a floating card and a dark page. Pick a locale to set <code>lang</code> on every widget. Scroll to trigger impressions; try the arrow keys on a scale.</p>
       <div class="controls">
         <label>Locale
           <select id="locale">
@@ -186,6 +186,14 @@
           <div class="card">
             <p>Invoices are generated on the first day of each month and kept for seven years.</p>
             <user-reactions project-key="pk_demo_local" type="open" surface="billing" subject="invoices-page" endpoint="/mock"></user-reactions>
+          </div>
+        </section>
+
+        <section aria-labelledby="h-float">
+          <h2 class="example" id="h-float">Floating card · placement="floating"</h2>
+          <div class="card">
+            <p>A CSAT card in the bottom-right corner of the window. Close it with × or Escape; after thanks it hides by itself about 4 s later (not while hovered or keyboard-focused). Both fire <code>dismissed</code>.</p>
+            <p><button type="button" class="more" id="show-floating">Show floating card</button></p>
           </div>
         </section>
 

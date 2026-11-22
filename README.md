@@ -23,6 +23,7 @@ Status: `0.1.0` (milestones M1–M3: thumbs, CSAT/CES scales, en/fi/sv). Full re
 Or `npm install @user-reactions/widget`, then `import "@user-reactions/widget";` (registers `<user-reactions>`; also exports `sendFeedback` for native apps and servers).
 
 - There is no hosted API yet, so `endpoint` is required: your own server or the dev mock below.
+- For a card in the bottom-right corner instead of inline, add `placement="floating"` and put the element at the end of `<body>` (from 0.2.0).
 - Pin the version in the script tag. For a fixed file, add the `integrity` hash from the [release notes](https://github.com/atuuri/user-reactions-widget/releases).
 - Your server must allow CORS preflight from the page origin with the `Content-Type` and `X-Project-Key` headers.
 

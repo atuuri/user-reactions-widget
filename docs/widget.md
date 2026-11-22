@@ -1,9 +1,9 @@
 # Widget spec
 
-Status: draft v1 (2026-11-12). The single source for behaviour, attributes, events and styling; the README only links here. Future work: [M6 floating placement](m6-floating.md).
+Status: draft v1 (2026-11-12). The single source for behaviour, attributes, events and styling; the README only links here. Future work: [impressions opt-out](#future-impressions-opt-out-not-scheduled).
 
 ## Purpose
-An inline feedback element that teams drop next to an AI answer or a key flow. It captures a rating, an optional comment (or, with `type="open"`, open feedback with no rating) and the context of what was rated (`surface`, `subject`, `meta`), and sends it to the ingest API (`docs/api/openapi.yaml`). The value is the context, not the buttons.
+A feedback element that teams drop next to an AI answer or a key flow, inline by default or as a [floating card](#floating-placement-placementfloating) in the corner of the page. It captures a rating, an optional comment (or, with `type="open"`, open feedback with no rating) and the context of what was rated (`surface`, `subject`, `meta`), and sends it to the ingest API (`docs/api/openapi.yaml`). The value is the context, not the buttons.
 
 ## Element
 
@@ -30,6 +30,7 @@ Package `@user-reactions/widget`, served from npm by jsDelivr and unpkg. Pin the
 | `question` | no | string | Overrides the question. `question=""` hides it; the default text still labels the button group for screen readers. For `open` it relabels the toggle, and an empty value keeps the default. |
 | `after-send` | no | `replace` (default), `keep` | After the final send, `replace` leaves only the thanks text; `keep` keeps the question and buttons (0.1 behaviour). Unknown values act as `replace`. Read when feedback becomes final; changing it does not reset. |
 | `thanks` | no | string | Overrides the thanks text in both modes, shown as given and not translated. An empty value keeps the default. Changing it does not reset. |
+| `placement` | no | `inline` (default), `floating` | `floating` shows the element as a card fixed to the bottom-right corner ([Floating placement](#floating-placement-placementfloating)). Unknown values act as `inline`. Changing it does not reset. |
 | `lang` | no | `en` (default), `fi`, `sv` | Built-in strings, matched by primary subtag (`fi-FI` → `fi`); other languages show English. Sent as `locale` as given. |
 | `endpoint` | yes, until the hosted API launches | URL | API base URL; the element appends `/v1/impressions` and `/v1/feedback`. Without it the element renders, but each request it would send fires `invalid-attribute` instead. |
 
@@ -67,7 +68,7 @@ Captions under the first and last button name the ends; they are `aria-hidden`, 
    - **`replace`** (default): the question, buttons, captions and comment box are removed and only the thanks text stays, in the `thanks` part with `role="status"`. If focus was inside the element, it moves to the thanks text (`tabindex="-1"`, no focus ring), so keyboard users are not dropped to the top of the page. A short fade runs only under `prefers-reduced-motion: no-preference`.
    - **`keep`**: as in 0.1. Without a comment box the buttons stay usable; after a comment is sent they are locked (`aria-disabled`) and focus returns to the selected button. Send with an empty box shows thanks right away.
 7. **Failure**: on a network error, 429 or 5xx, retry once after 1 s; other 4xx are not retried. If it still fails, fire `error` and keep the UI usable: nothing is replaced, the thanks message is removed, the selection stays and clicking the same button again resends; a failed comment keeps its text. Never throw into the host page.
-8. **Attribute changes**: changing `subject`, `meta`, `type`, `lang`, `question` or `comment` resets the element as a new instance: new `id`, nothing selected, comment box and thanks cleared, and one new impression once visible. This also brings back the full element after `replace`. Needed for chat UIs that reuse nodes. Requests already sent keep their old `id` and no longer affect the UI. `endpoint` and `project-key` are read at send time, `after-send` and `thanks` when thanks shows; none of them reset.
+8. **Attribute changes**: changing `subject`, `meta`, `type`, `lang`, `question` or `comment` resets the element as a new instance: new `id`, nothing selected, comment box and thanks cleared, and one new impression once visible. This also brings back the full element after `replace`. Needed for chat UIs that reuse nodes. Requests already sent keep their old `id` and no longer affect the UI. `endpoint` and `project-key` are read at send time, `after-send` and `thanks` when thanks shows, and `placement` applies at once; none of them reset.
 
 ### Open feedback (`type="open"`)
 
@@ -86,6 +87,25 @@ A standalone element with no rating: a place for any free-text feedback (ideas, 
 6. **Failure**: same retry rule. On final failure fire `error`, keep the box open with the text and show no thanks; Send again resends with the same `id`.
 7. **Attribute changes**: as behaviour 8.
 
+### Floating placement (`placement="floating"`)
+
+The element shows as a small card fixed to the bottom-right corner of the viewport instead of in the page flow. It is opt-in and works with every `type`, including `open`. The card is never triggered: it shows like any element, when the host puts it on the page.
+
+```html
+<!-- Put it at the end of <body>, so it comes last in the Tab order -->
+<user-reactions project-key="pk_live_xxx" type="csat" surface="checkout" placement="floating"
+  endpoint="https://api.example.com"></user-reactions>
+```
+
+1. **Position**: `position: fixed` at the bottom-right, using logical properties (`inset-block-end`, `inset-inline-end`), so it sits on the left in right-to-left pages. `--ur-offset` from the viewport edges, plus `env(safe-area-inset-*)`. Under 480 px wide it spans the viewport minus `--ur-offset` on each side. The host element is the card, so hosts style it with `user-reactions[placement=floating]` and the usual properties.
+2. **Look**: opaque `--ur-bg` (system `Canvas` by default) with `--ur-text` (system `CanvasText` by default), so it reads on any page; `--ur-radius` capped at 12 px like the comment box; a light shadow and a 1 px border at 50% of the text colour.
+3. **Close**: a labelled close `<button>` (part `close`) in the top inline-end corner, last in the Tab order, and Escape while focus is inside the card. In open feedback, Escape in the text box closes the box first. Closing hides the card for this page view (the element sets `hidden` on itself) and fires `dismissed` with `reason: "close"`. Nothing is stored; hosts that want dismissal to persist store it themselves. Focus is not moved; hosts that want it somewhere specific set it on `dismissed`.
+4. **After thanks**: with `after-send="replace"` (default) the card keeps the thanks text and the close button, then hides about 4 s later and fires `dismissed` with `reason: "done"`. The wait does not run while the pointer is over the card or keyboard focus is inside it, and starts again when both leave. Focus left inside by a mouse click (for example on the thanks text after `replace`) does not hold it, so mouse users are not left with a card that never hides. With `keep` it never hides on its own. A failed send hides nothing.
+5. **Not a modal**: no backdrop, no focus trap, no auto-focus. It stays at its own place in the Tab order.
+6. **Impression**: as for inline elements; a floating card is usually visible at once, so it fires on show. A dismissed card is done: re-adding the element, or a reset attribute change (behaviour 8), shows it again as a new instance with a new impression.
+7. **Motion**: slide-in on show and fade-out on hide only under `prefers-reduced-motion: no-preference`.
+8. **One per page**: each floating element positions itself independently, so two would overlap. Use one floating element per page.
+
 Requests are JSON `POST`s with an `X-Project-Key` header, so browsers send a CORS preflight: the server must allow the page origin and the `Content-Type` and `X-Project-Key` headers.
 
 ## Events (CustomEvent, bubbles, composed)
@@ -94,6 +114,7 @@ Requests are JSON `POST`s with an `X-Project-Key` header, so browsers send a COR
 |---|---|---|
 | `user-reactions:rated` | `{ id, type, score, surface, subject }` | On selection, before the request completes |
 | `user-reactions:commented` | `{ id, comment }` | Once the API accepts the comment, or the open feedback for `type="open"` |
+| `user-reactions:dismissed` | `{ reason }` | Floating only, when the card hides: `"close"` (close button or Escape) or `"done"` (about 4 s after thanks) |
 | `user-reactions:error` | `{ code, message }` | See below |
 
 | `code` | When |
@@ -121,11 +142,11 @@ Same payload and endpoint as the element, with `client: "headless@<version>"`. O
 
 ## Styling
 
-- Custom properties: `--ur-font`, `--ur-text`, `--ur-muted`, `--ur-accent`, `--ur-bg`, `--ur-radius`, `--ur-gap`.
-- Parts: `question`, `button`, `button-selected`, `scale-label` (csat/ces end captions), `toggle` (open feedback), `comment`, `send`, `thanks`.
+- Custom properties: `--ur-font`, `--ur-text`, `--ur-muted`, `--ur-accent`, `--ur-bg`, `--ur-radius`, `--ur-gap`; for the floating card also `--ur-offset` (distance from the viewport edges, default 16px) and `--ur-z` (stacking order, default 2147483000).
+- Parts: `question`, `button`, `button-selected`, `scale-label` (csat/ces end captions), `toggle` (open feedback), `comment`, `send`, `thanks`, `close` (floating card).
 - Inherits font; looks native on light and dark pages. Colours derive from the text colour (borders at 50%, focus ring and selected state at full strength) unless `--ur-*` is set, with system colours (`GrayText`) as fallbacks. Compact: one line for thumbs, scales add a caption line.
 - The comment box radius is capped at 12 px, so a pill `--ur-radius` only rounds the buttons.
-- Transitions and the fade after `replace` run only under `prefers-reduced-motion: no-preference`.
+- Transitions, the fade after `replace` and the floating card's slide-in and fade-out run only under `prefers-reduced-motion: no-preference`.
 
 ## Accessibility
 
@@ -133,6 +154,7 @@ Same payload and endpoint as the element, with `client: "headless@<version>"`. O
 - Scales are one Tab stop (selected button, else the first). ←/→ and ↑/↓ move focus without selecting, Home/End jump to the ends, Enter/Space select. Thumbs keep both buttons in the Tab order.
 - Open feedback: the toggle is a real `<button>` with `aria-expanded` and `aria-controls`; Escape in the box closes it and returns focus to the toggle.
 - Thanks is announced with `role="status"`. After `replace`, focus that was inside the element moves to the thanks text.
+- Floating card: a labelled close button ("Close", "Sulje", "Stäng") and Escape; not a modal, so no focus trap and no auto-focus.
 
 ## Milestones
 
@@ -145,9 +167,21 @@ Same payload and endpoint as the element, with `client: "headless@<version>"`. O
    - **Reduced motion**: transitions only under `prefers-reduced-motion: no-preference`, with a test.
    - **Beta findings**: cap the comment box radius (about 12 px) so a pill `--ur-radius` does not round it; after a final failed send, remove the thanks message and keep the selection, so clicking again resends.
    - **0.1.0**: README drops the pre-release notes; the release takes npm `latest`.
-4. **M5 Replace with thanks**, done, released in 0.2.0 (moved ahead of M4): once feedback is final, the element is replaced by the thanks message by default (`after-send="keep"` opts out); custom `thanks` text. Default change listed in the changelog with the opt-out; README install snippet moves to 0.2.0 at release. Demo examples for both modes.
-5. **M4 Open feedback**, current, released together with M5 in 0.2.0: `type="open"`, a "Give feedback" toggle with a free-text box and no rating ([Open feedback](#open-feedback-typeopen)). Planned as "Suggestions" (`type="suggestion"`); renamed because it takes any open feedback, not only improvement ideas. Needs the ingest server to accept `type: "open"` before release. Demo example.
-6. **M6 Floating placement**, released as 0.3.0: `placement="floating"` shows a card in the bottom-right corner; `inline` stays the default. See [m6-floating.md](m6-floating.md).
+4. **M5 Replace with thanks**, done, ships in 0.2.0 (moved ahead of M4): once feedback is final, the element is replaced by the thanks message by default (`after-send="keep"` opts out); custom `thanks` text. Default change listed in the changelog with the opt-out; README install snippet moves to 0.2.0 at release. Demo examples for both modes.
+5. **M4 Open feedback**, done, ships with M5 in 0.2.0: `type="open"`, a "Give feedback" toggle with a free-text box and no rating ([Open feedback](#open-feedback-typeopen)). Planned as "Suggestions" (`type="suggestion"`); renamed because it takes any open feedback, not only improvement ideas. Needs the ingest server to accept `type: "open"` before release. Demo example.
+6. **M6 Floating placement**, current, ships with M4 and M5 in 0.2.0 (moved from 0.3.0): `placement="floating"` shows a card in the bottom-right corner; `inline` stays the default ([Floating placement](#floating-placement-placementfloating)). New `close` string in fi/sv for native review. Demo example and README note.
+7. **Impressions opt-out**, future, not scheduled: see [below](#future-impressions-opt-out-not-scheduled).
+
+## Acceptance criteria (M6)
+
+- `placement="floating"` renders a fixed card in the bottom-right; `inline` and unknown values render as before, with no close button.
+- Readable on a dark page with no `--ur-*` set (WCAG AA for text, borders, focus ring, selected state).
+- Close button and Escape hide the card and fire `dismissed` with `reason: "close"`; nothing is stored.
+- With the default `after-send`, the card hides about 4 s after thanks with `reason: "done"`, and not while hovered or keyboard-focused.
+- One impression on show; changing `placement` does not send another or change the `id`.
+- No focus trap: Tab and Shift+Tab move in and out of the card in DOM order.
+- With `prefers-reduced-motion: reduce`, nothing animates.
+- IIFE bundle ≤ 8 kB min+gzip.
 
 ## Acceptance criteria (M4)
 
@@ -171,8 +205,25 @@ Same payload and endpoint as the element, with `client: "headless@<version>"`. O
 - With `prefers-reduced-motion: reduce`, nothing animates.
 - IIFE bundle ≤ 8 kB min+gzip.
 
-M1–M3 criteria are covered by the tests in `test/`; M5 by `test/thanks.test.ts`.
+M1–M3 criteria are covered by the tests in `test/`; M4 by `test/open.test.ts`, M5 by `test/thanks.test.ts`, M6 by `test/floating.test.ts`.
+
+## Future: impressions opt-out (not scheduled)
+
+Spec only: not implemented and not planned for a release yet.
+
+An attribute, for example `impressions="off"`, stops the element from sending `POST /v1/impressions`. Ratings, comments and open feedback are sent as today. For hosts that do not want a request on every view (strict privacy or security reviews, request budgets, pages that show the element many times) or that count views their own way.
+
+**Effect on the response rate.** The response rate is feedback ÷ impressions for a surface, so impressions are its denominator:
+- A surface where every element has impressions off has no response rate. Reports show feedback counts only and say the rate is unavailable, never 0% or 100%.
+- A surface that mixes elements with and without impressions overstates its rate: feedback from the opted-out elements counts, their views do not. The docs will say to use one setting per surface.
+- Today's feedback payload does not say whether impressions were sent, so the server cannot tell an opted-out surface from one with a broken impression call.
+- Open feedback (`type="open"`) is least affected: its response rate is rarely the point.
+
+Open questions for when it is scheduled:
+- Attribute name and values (`impressions="off"` or a boolean such as `no-impressions`).
+- Whether feedback should carry a flag (for example `impressions: false`) so reports can tell the cases apart. That is an API contract change and needs the platform.
+- Whether the headless client gets `sendImpression()`, so hosts that opt out of automatic impressions can still count views when they choose.
 
 ## Out of scope
 
-Targeting and triggers, pop-ups and modals, multi-question surveys, NPS, native iOS/Android SDKs, offline queueing, analytics, any storage of user identity.
+Targeting and triggers, triggered pop-ups and modals, multi-question surveys, NPS, native iOS/Android SDKs, offline queueing, analytics, any storage of user identity.

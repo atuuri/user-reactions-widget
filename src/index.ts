@@ -7,6 +7,6 @@ import { define } from './element.js';
 export { sendFeedback, ReactionsError, VERSION } from './client.js';
 export type { ErrorCode, FeedbackPayload, FeedbackType, ImpressionPayload, Meta, SendFeedbackOptions } from './client.js';
 export { UserReactionsElement, TAG } from './element.js';
-export type { RatedDetail, CommentedDetail, ErrorDetail } from './element.js';
+export type { RatedDetail, CommentedDetail, DismissedDetail, ErrorDetail } from './element.js';
 
 define();
