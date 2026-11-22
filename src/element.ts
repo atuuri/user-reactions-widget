@@ -1,9 +1,11 @@
 // SPDX-License-Identifier: MIT
 // <user-reactions> web component. Every entry point is guarded: errors surface only
 // as `user-reactions:error` events and never reach the host page.
+// Colours come from the host text colour, --ur-* variables or system colours, so the
+// element reads on light and dark pages without configuration.
 
 import { type ErrorCode, type FeedbackPayload, type FeedbackType, type Meta, VERSION, clean, post, uuid } from './client.js';
-import { type Strings, strings } from './strings.js';
+import { type Strings, language, strings } from './strings.js';
 
 export const TAG = 'user-reactions';
 
@@ -58,7 +60,8 @@ const cap = (t: string) => t[0].toUpperCase() + t.slice(1);
 const ICON =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10h4v11H3zM7 10l4-8c1.7 0 3 1.3 3 3v4h5.5c1.4 0 2.4 1.3 2.1 2.6l-1.6 7.5c-.2 1.1-1.2 1.9-2.3 1.9H7"/></svg>';
 
-const LINE = 'border:1px solid #8888;border:1px solid color-mix(in srgb,currentColor 35%,transparent);border-radius:var(--ur-radius,6px);background:var(--ur-bg,transparent);color:inherit;font:inherit';
+// 50% of the text colour keeps borders at ≥ 3:1 on light and dark pages; GrayText where color-mix is unsupported.
+const LINE = 'border:1px solid GrayText;border:1px solid color-mix(in srgb,currentColor 50%,transparent);border-radius:var(--ur-radius,6px);background:var(--ur-bg,transparent);color:inherit;font:inherit';
 
 const CSS =
   `:host{display:block;font-family:var(--ur-font,inherit);color:var(--ur-text,inherit)}:host([hidden]){display:none}` +
@@ -68,18 +71,22 @@ const CSS =
   `[part=scale-label]{display:flex;justify-content:space-between;gap:1em;font-size:.8em}` +
   `button{${LINE};display:inline-flex;align-items:center;padding:.3em .55em;line-height:1;cursor:pointer}` +
   `button:hover{border-color:currentColor}[aria-disabled=true]{cursor:default;opacity:.7}` +
-  `[aria-pressed=true]{border-color:var(--ur-accent,currentColor);color:var(--ur-accent,inherit)}` +
+  `[aria-pressed=true]{border-color:var(--ur-accent,currentColor);box-shadow:inset 0 0 0 1px var(--ur-accent,currentColor);color:var(--ur-accent,inherit)}` +
   `svg{width:1.15em;height:1.15em;fill:none;stroke:currentColor;stroke-width:2;stroke-linejoin:round}` +
   `[aria-pressed=true] svg{fill:currentColor;fill-opacity:.25}[data-s="0"] svg{transform:rotate(180deg)}` +
-  `button:focus-visible,textarea:focus-visible{outline:2px solid var(--ur-accent,Highlight);outline-offset:2px}` +
+  `button:focus-visible,textarea:focus-visible{outline:2px solid var(--ur-accent,currentColor);outline-offset:2px}` +
   `form{display:flex;flex-direction:column;align-items:flex-start;gap:var(--ur-gap,.5em);margin-top:var(--ur-gap,.5em);max-width:36em}` +
-  `form[hidden]{display:none}textarea{${LINE};box-sizing:border-box;width:100%;min-height:4.5em;padding:.5em;resize:vertical}` +
-  `@media (prefers-reduced-motion:no-preference){button{transition:border-color .15s,color .15s}}`;
+  `form[hidden]{display:none}textarea{${LINE};border-radius:min(var(--ur-radius,6px),12px);box-sizing:border-box;width:100%;min-height:4.5em;padding:.5em;resize:vertical}` +
+  `textarea::placeholder{color:inherit;opacity:.7}` +
+  `@media (prefers-reduced-motion:no-preference){button{transition:border-color .15s,box-shadow .15s,color .15s}}`;
 
 // Lets `import "user-reactions"` succeed outside a browser (Node, SSR) for the headless client.
 const Base = (typeof HTMLElement == 'undefined' ? class {} : HTMLElement) as typeof HTMLElement;
 
 export class UserReactionsElement extends Base {
+  /** Behaviour 8: a change to any of these starts a new instance (new id, new impression). */
+  static observedAttributes = ['subject', 'meta', 'type', 'lang', 'question', 'comment'];
+
   private c?: Config;
   private fid = '';
   private score: number | null = null;
@@ -89,11 +96,25 @@ export class UserReactionsElement extends Base {
   private io?: IntersectionObserver;
   private q: Promise<unknown> = Promise.resolve();
   private sr?: ShadowRoot;
+  /** Instance generation; responses for an earlier generation no longer touch the UI. */
+  private gen = 0;
 
   connectedCallback() {
     this.guard(() => {
-      if (!this.sr) this.init();
+      if (!this.sr) {
+        this.sr = this.attachShadow({ mode: 'open' });
+        this.init();
+      }
       this.watch();
+    });
+  }
+
+  attributeChangedCallback(_name: string, old: string | null, value: string | null) {
+    // Before the first connect, connectedCallback renders with the final attributes.
+    if (old === value || !this.sr) return;
+    this.guard(() => {
+      this.init();
+      if (this.isConnected) this.watch();
     });
   }
 
@@ -122,8 +143,15 @@ export class UserReactionsElement extends Base {
     this.dispatchEvent(new CustomEvent(`${TAG}:${name}`, { detail, bubbles: true, composed: true }));
   }
 
+  /** Renders a fresh instance: new id, nothing selected, no comment box or thanks, impression pending. */
   private init() {
-    const sr = (this.sr = this.attachShadow({ mode: 'open' }));
+    const sr = this.sr!;
+    this.unwatch();
+    this.gen++;
+    this.c = undefined;
+    this.score = null;
+    this.failed = this.done = this.seen = false;
+    sr.innerHTML = '';
     const type = this.attr('type') as FeedbackType | undefined;
     const surface = this.attr('surface');
     const subject = this.attr('subject');
@@ -145,6 +173,7 @@ export class UserReactionsElement extends Base {
     const m = this.attr('comment');
     const lang = this.attr('lang') || 'en';
     const s = strings(lang);
+    const ln = `lang="${language(lang)}"`;
     this.c = {
       type: type!,
       surface: surface!,
@@ -164,11 +193,11 @@ export class UserReactionsElement extends Base {
       .map((v) => `<button part="button" data-s="${v}" aria-pressed="false"${scale ? ` class="n" tabindex="${v == 1 ? 0 : -1}">${v}` : `>${ICON}`}</button>`)
       .join('');
     sr.innerHTML =
-      `<style>${CSS}</style><div class="r${scale ? ' s' : ''}"><span part="question" id="q"></span>` +
+      `<style>${CSS}</style><div ${ln} class="r${scale ? ' s' : ''}"><span part="question" id="q"></span>` +
       `<span class="g" role="group" aria-labelledby="q"><span class="r">${buttons}</span>` +
       (scale ? `<span part="scale-label" aria-hidden="true"><span></span><span></span></span>` : '') +
       `</span><span part="thanks" role="status"></span></div>` +
-      `<form hidden><textarea part="comment" maxlength="2000"></textarea><button part="send" type="submit"></button></form>`;
+      `<form ${ln} hidden><textarea part="comment" maxlength="2000"></textarea><button part="send" type="submit"></button></form>`;
 
     // question="" shows only the buttons; the hidden text still labels the group for screen readers.
     const q = this.$('[part=question]');
@@ -252,19 +281,24 @@ export class UserReactionsElement extends Base {
   private send(comment?: string): Promise<boolean> {
     const { type, surface, subject, meta, locale } = this.c!;
     const payload: FeedbackPayload = clean({ id: this.fid, type, score: this.score!, surface, subject, meta, comment, locale, client: `widget@${VERSION}` });
+    const g = this.gen;
     const run = () =>
       post(this.attr('endpoint'), '/v1/feedback', this.attr('project-key') || '', payload).then(
         () => {
-          this.failed = false;
+          if (g == this.gen) this.failed = false;
           return true;
         },
         (e) => {
-          this.failed = true;
           this.fail(e.code, e.message);
+          if (g == this.gen) {
+            this.failed = true;
+            // The latest send failed for good: no thanks; the selection stays so a click resends.
+            if (this.q === p) this.$('[part=thanks]').textContent = '';
+          }
           return false;
         },
       );
-    const p = this.q.then(run);
+    const p: Promise<boolean> = this.q.then(run);
     this.q = p;
     return p;
   }
@@ -292,10 +326,11 @@ export class UserReactionsElement extends Base {
     const btn = this.$<HTMLButtonElement>('[part=send]');
     const comment = ta.value.trim().slice(0, 2000);
     if (comment) {
+      const g = this.gen;
       btn.disabled = true;
       const ok = await this.send(comment);
       btn.disabled = false;
-      if (!ok) return; // error already fired; keep the text so the user can retry
+      if (!ok || g != this.gen) return; // error already fired, or the element was reset; keep the text so the user can retry
       this.done = true;
       for (const b of this.buttons()) b.setAttribute('aria-disabled', 'true');
     }

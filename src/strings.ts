@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-// Built-in strings. English only for now; fi and sv arrive with M3.
+// Built-in strings for every visible text and label. fi and sv await native-speaker review.
 
 export interface Strings {
   thumbs: string;
@@ -31,7 +31,41 @@ const en: Strings = {
   thanks: 'Thanks for your feedback',
 };
 
-const table: Record<string, Strings> = { en };
+const fi: Strings = {
+  thumbs: 'Oliko tästä apua?',
+  csat: 'Kuinka tyytyväinen olet?',
+  ces: 'Kuinka helppoa tämä oli?',
+  up: 'Hyödyllinen',
+  down: 'Ei hyödyllinen',
+  of: '/',
+  csatPoints: ['erittäin tyytymätön', 'tyytymätön', 'neutraali', 'tyytyväinen', 'erittäin tyytyväinen'],
+  cesPoints: ['erittäin vaikeaa', 'vaikeaa', 'melko vaikeaa', 'ei helppoa eikä vaikeaa', 'melko helppoa', 'helppoa', 'erittäin helppoa'],
+  placeholder: 'Kerro lisää (vapaaehtoinen)',
+  send: 'Lähetä',
+  thanks: 'Kiitos palautteestasi',
+};
+
+const sv: Strings = {
+  thumbs: 'Var detta till hjälp?',
+  csat: 'Hur nöjd är du?',
+  ces: 'Hur enkelt var detta?',
+  up: 'Till hjälp',
+  down: 'Inte till hjälp',
+  of: 'av',
+  csatPoints: ['mycket missnöjd', 'missnöjd', 'neutral', 'nöjd', 'mycket nöjd'],
+  cesPoints: ['mycket svårt', 'svårt', 'ganska svårt', 'varken lätt eller svårt', 'ganska lätt', 'lätt', 'mycket lätt'],
+  placeholder: 'Berätta mer (valfritt)',
+  send: 'Skicka',
+  thanks: 'Tack för din feedback',
+};
+
+export const LANGS: Record<string, Strings> = { en, fi, sv };
+
+/** Built-in language for a `lang` value by its primary subtag (fi-FI → fi); unknown languages fall back to English. */
+export const language = (lang?: string): string => {
+  const p = (lang || '').trim().toLowerCase().split(/[-_]/)[0];
+  return Object.hasOwn(LANGS, p) ? p : 'en';
+};
 
 /** Strings for a `lang` value; unknown languages fall back to English. */
-export const strings = (lang?: string): Strings => table[lang || 'en'] || en;
+export const strings = (lang?: string): Strings => LANGS[language(lang)];
