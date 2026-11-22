@@ -76,12 +76,18 @@ outage.onchange = syncEndpoint;
 syncEndpoint();
 
 // Locale picker: "None" removes lang (English default); otherwise sets it on every widget.
-// A lang change resets each widget as a new instance (behaviour 8).
-function setLang(w: Element) {
+// The widget does not translate a custom question, so the host switches it too, from
+// data-question-fi / data-question-sv next to the English question attribute.
+// A lang or question change resets each widget as a new instance (behaviour 8).
+function setLang(w: HTMLElement) {
+  const d = w.dataset;
+  if (d.questionEn == null && w.hasAttribute('question')) d.questionEn = w.getAttribute('question')!;
+  const q = (locale.value == 'fi' ? d.questionFi : locale.value == 'sv' ? d.questionSv : undefined) ?? d.questionEn;
+  if (q != null) w.setAttribute('question', q);
   if (locale.value) w.setAttribute('lang', locale.value);
   else w.removeAttribute('lang');
 }
-const syncLang = () => document.querySelectorAll('user-reactions').forEach(setLang);
+const syncLang = () => document.querySelectorAll<HTMLElement>('user-reactions').forEach(setLang);
 locale.onchange = syncLang;
 syncLang();
 document.getElementById('clear')!.onclick = () => (log.textContent = '');
