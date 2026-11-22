@@ -138,6 +138,9 @@
               question="Was this article helpful?"
               data-question-fi="Oliko tästä artikkelista apua?"
               data-question-sv="Var den här artikeln till hjälp?"
+              thanks="Thanks, this helps us improve the article"
+              data-thanks-fi="Kiitos, tämä auttaa meitä parantamaan artikkelia"
+              data-thanks-sv="Tack, det här hjälper oss att förbättra artikeln"
               comment="on-negative"
               endpoint="/mock"></user-reactions>
           </article>
@@ -163,12 +166,13 @@
         </section>
 
         <section aria-labelledby="h-ces">
-          <h2 class="example" id="h-ces">CES after a support flow</h2>
+          <h2 class="example" id="h-ces">CES after a support flow · after-send="keep"</h2>
           <div class="card">
             <p class="done">✓ Your address was updated</p>
             <p>The new address applies to all orders that have not shipped yet.</p>
             <user-reactions
               project-key="pk_demo_local"
+              after-send="keep"
               type="ces"
               surface="support-flow"
               subject="change-address"

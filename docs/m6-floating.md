@@ -1,6 +1,6 @@
 # M6: Floating placement (planned, 0.4.0)
 
-Read only when working on M6. Everything not stated here works as in [widget.md](widget.md) and [m5-thanks.md](m5-thanks.md).
+Read only when working on M6. Everything not stated here works as in [widget.md](widget.md).
 
 `placement="floating"` shows the element as a small card fixed to the bottom-right corner of the viewport instead of inline in the page flow. It is opt-in; `inline` stays the default. It works with every `type`, including `suggestion`.
 
@@ -29,7 +29,7 @@ Read only when working on M6. Everything not stated here works as in [widget.md]
 1. **Position**: `position: fixed` at the bottom-right, using logical properties (`inset-block-end`, `inset-inline-end`), so it moves to the left in right-to-left pages. Respects `env(safe-area-inset-*)`. On narrow viewports (under about 480 px) it spans the width minus `--ur-offset` on each side.
 2. **Look**: opaque `--ur-bg` (system `Canvas` by default, so it works on dark pages), `--ur-radius` capped like the comment box, a light shadow and a 1 px border at 50% of the text colour, as for buttons.
 3. **Close**: a labelled close `<button>` in the top corner, and Escape while focus is inside the card. Hides the card for this page view and fires `dismissed` with `reason: "close"`. The element does not move focus elsewhere; hosts that want focus to land somewhere specific set it on `dismissed`.
-4. **After thanks**: with `after-send="replace"` (the M5 default), the card keeps the thanks text and the close button, then hides about 4 s later and fires `dismissed` with `reason: "done"`. The timer pauses while the pointer is over the card or focus is inside it. With `keep`, it never hides on its own.
+4. **After thanks**: with `after-send="replace"` (the default since 0.2.0), the card keeps the thanks text and the close button, then hides about 4 s later and fires `dismissed` with `reason: "done"`. The timer pauses while the pointer is over the card or focus is inside it. With `keep`, it never hides on its own.
 5. **Not a modal**: no backdrop, no focus trap, no auto-focus. It stays at its own place in the Tab order.
 6. **Impression**: fires as soon as the card shows, since it is visible on load. Hiding it ends that instance; re-adding the element (or a reset attribute change) shows it again as a new instance.
 7. **Motion**: slide-in and fade-out only under `prefers-reduced-motion: no-preference`.

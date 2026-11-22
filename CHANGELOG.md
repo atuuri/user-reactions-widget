@@ -4,6 +4,18 @@ All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versi
 
 ## Unreleased
 
+### Changed
+- **Default behaviour:** once feedback is final (the rating is accepted, or the comment when the comment box is shown), the element is replaced by the thanks message: question, buttons and comment box are removed, focus inside the element moves to the thanks text, and a short fade runs only under `prefers-reduced-motion: no-preference`. To keep the 0.1 behaviour, add `after-send="keep"`.
+- With the default, an empty Send waits until the rating is accepted.
+
+### Added
+- `after-send="replace|keep"` attribute.
+- `thanks` attribute: custom thanks text in both modes, shown as given.
+- Demo: a custom `thanks` (with fi/sv) on the help article, and an `after-send="keep"` example.
+
+### Docs
+- Roadmap: M5 Replace with thanks moves ahead of Suggestions and ships as 0.2.0; Suggestions moves to 0.3.0. The M5 plan is folded into `docs/widget.md`.
+
 ## 0.1.0
 
 First stable release; npm `latest` and ranges such as `@0.1` now resolve to it.
