@@ -59,26 +59,26 @@ describe('the validator', () => {
   });
 });
 
-describe('suggestions (M4 contract)', () => {
-  const suggestion = feedback.examples.suggestion as Record<string, any>;
+describe('open feedback (M4 contract)', () => {
+  const openEx = feedback.examples.open as Record<string, any>;
 
-  it('the example is a suggestion with a comment and no score', () => {
-    expect(suggestion.type).toBe('suggestion');
-    expect(suggestion).not.toHaveProperty('score');
-    expect(validateRequest('/v1/feedback', suggestion)).toEqual([]);
+  it('the example is open feedback with a comment and no score', () => {
+    expect(openEx.type).toBe('open');
+    expect(openEx).not.toHaveProperty('score');
+    expect(validateRequest('/v1/feedback', openEx)).toEqual([]);
   });
 
-  it('rejects a suggestion with a score', () => {
-    expect(validateRequest('/v1/feedback', { ...suggestion, score: 1 })).toEqual(['body.score: not allowed']);
+  it('rejects open feedback with a score', () => {
+    expect(validateRequest('/v1/feedback', { ...openEx, score: 1 })).toEqual(['body.score: not allowed']);
   });
 
-  it('rejects a suggestion without a comment', () => {
-    const { comment: _, ...rest } = suggestion;
+  it('rejects open feedback without a comment', () => {
+    const { comment: _, ...rest } = openEx;
     expect(validateRequest('/v1/feedback', rest)).toEqual(['body: missing required "comment"']);
   });
 
-  it('accepts a suggestion impression', () => {
-    expect(validateRequest('/v1/impressions', { type: 'suggestion', surface: 'billing', client: 'widget@0.2.0' })).toEqual([]);
+  it('accepts an open feedback impression', () => {
+    expect(validateRequest('/v1/impressions', { type: 'open', surface: 'billing', client: 'widget@0.2.0' })).toEqual([]);
   });
 });
 
@@ -119,6 +119,25 @@ describe('payloads match the spec examples', () => {
     await sendFeedback({ projectKey: 'pk', id, type, score, surface, subject, meta, comment, locale, endpoint: 'https://api.test' });
     expect(net.calls[0].body).toEqual({ ...thumbsDown, client: `headless@${VERSION}` });
     expect(validateRequest('/v1/feedback', net.calls[0].body)).toEqual([]);
+  });
+
+  it('element: type="open" produces the open example (apart from the random id)', async () => {
+    const ex = feedback.examples.open as Record<string, any>;
+    const net = mockFetch();
+    const m = mount({ type: 'open', surface: ex.surface, subject: ex.subject, lang: ex.locale });
+    m.q<HTMLButtonElement>('[part=toggle]').click();
+    comment(m, ex.comment);
+    await flush();
+    const body = net.feedback()[0].body;
+    expect(validateRequest('/v1/feedback', body)).toEqual([]);
+    expect({ ...body, id: ex.id, client: ex.client }).toEqual(ex);
+  });
+
+  it('sendFeedback: produces the open example', async () => {
+    const ex = feedback.examples.open as Record<string, any>;
+    const net = mockFetch();
+    await sendFeedback({ projectKey: 'pk', id: ex.id, type: 'open', comment: ex.comment, surface: ex.surface, subject: ex.subject, locale: ex.locale, endpoint: 'https://api.test' });
+    expect(net.calls[0].body).toEqual({ ...ex, client: `headless@${VERSION}` });
   });
 
   it('sendFeedback: produces the ces example', async () => {

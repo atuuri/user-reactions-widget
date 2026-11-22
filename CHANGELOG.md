@@ -9,12 +9,17 @@ All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versi
 - With the default, an empty Send waits until the rating is accepted.
 
 ### Added
+- `type="open"`: open feedback with no rating. A "Give feedback" toggle (`aria-expanded`, Escape closes) shows a free-text box; Send posts `type: "open"` with the comment and no score. Works with `after-send` and `thanks` like ratings; fires `commented` once accepted. New part `toggle`; new en/fi/sv strings for the toggle and its placeholder.
+- `sendFeedback({ type: "open", comment })`: sends no score and rejects with `invalid-attribute` without a comment.
+- Demo: an open feedback example.
 - `after-send="replace|keep"` attribute.
 - `thanks` attribute: custom thanks text in both modes, shown as given.
 - Demo: a custom `thanks` (with fi/sv) on the help article, and an `after-send="keep"` example.
 
 ### Docs
-- Roadmap: M5 Replace with thanks moves ahead of Suggestions and ships as 0.2.0; Suggestions moves to 0.3.0. The M5 plan is folded into `docs/widget.md`.
+- Roadmap: M5 Replace with thanks moves ahead of Suggestions and ships as 0.2.0. The M5 plan is folded into `docs/widget.md`.
+- Roadmap: Suggestions is renamed Open feedback (`type="open"`, was `type="suggestion"`) and ships in 0.2.0 with M5; floating placement moves to 0.3.0. The plan is folded into `docs/widget.md`.
+- API contract: the free-text type is `open` instead of `suggestion`.
 
 ## 0.1.0
 
