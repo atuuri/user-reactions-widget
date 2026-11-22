@@ -19,6 +19,8 @@ export interface Strings {
   openPlaceholder: string;
   send: string;
   thanks: string;
+  /** Close button of the floating card. */
+  close: string;
 }
 
 const en: Strings = {
@@ -35,6 +37,7 @@ const en: Strings = {
   openPlaceholder: 'What would you like to tell us?',
   send: 'Send',
   thanks: 'Thanks for your feedback',
+  close: 'Close',
 };
 
 const fi: Strings = {
@@ -51,6 +54,7 @@ const fi: Strings = {
   openPlaceholder: 'Mitä haluaisit kertoa meille?',
   send: 'Lähetä',
   thanks: 'Kiitos palautteestasi',
+  close: 'Sulje',
 };
 
 const sv: Strings = {
@@ -67,6 +71,7 @@ const sv: Strings = {
   openPlaceholder: 'Vad vill du berätta för oss?',
   send: 'Skicka',
   thanks: 'Tack för din feedback',
+  close: 'Stäng',
 };
 
 export const LANGS: Record<string, Strings> = { en, fi, sv };

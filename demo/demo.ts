@@ -98,6 +98,27 @@ document.getElementById('clear')!.onclick = () => (log.textContent = '');
 let reused = 1;
 document.getElementById('next-subject')!.onclick = () => document.getElementById('reused')!.setAttribute('subject', `reused-${++reused}`);
 
+// Floating card: one per page, appended at the end of <body> so it comes last in the Tab order.
+// A dismissed card is replaced by a fresh one (a new instance with a new impression).
+document.getElementById('show-floating')!.onclick = () => {
+  document.getElementById('floating')?.remove();
+  const w = document.createElement('user-reactions');
+  for (const [k, v] of Object.entries({
+    id: 'floating',
+    'project-key': 'pk_demo_local',
+    type: 'csat',
+    surface: 'checkout',
+    subject: 'floating-demo',
+    comment: 'on-negative',
+    placement: 'floating',
+    endpoint: endpoint(),
+  }))
+    w.setAttribute(k, v);
+  setLang(w);
+  document.body.append(w);
+};
+document.addEventListener('user-reactions:dismissed', (e) => entry('ev', `event dismissed  reason=${(e as CustomEvent).detail.reason}`, (e as CustomEvent).detail));
+
 // Host reactions to widget events: after a thumbs down, the chat offers a new answer
 // and the help article offers a way to contact support.
 document.addEventListener('user-reactions:rated', (e) => {

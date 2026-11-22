@@ -10,6 +10,8 @@ All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versi
 
 ### Added
 - `type="open"`: open feedback with no rating. A "Give feedback" toggle (`aria-expanded`, Escape closes) shows a free-text box; Send posts `type: "open"` with the comment and no score. Works with `after-send` and `thanks` like ratings; fires `commented` once accepted. New part `toggle`; new en/fi/sv strings for the toggle and its placeholder.
+- `placement="floating"`: shows the element as a card fixed to the bottom-right corner (bottom-left in right-to-left pages), full width under 480 px. A close button (part `close`) and Escape hide it for the page view; with the default `after-send` it hides about 4 s after thanks, but not while hovered or keyboard-focused. New event `user-reactions:dismissed` with `{ reason: "close" | "done" }`; nothing is stored. New custom properties `--ur-offset` and `--ur-z`; new en/fi/sv string for the close button. `inline` stays the default.
+- Demo: a floating card example.
 - `sendFeedback({ type: "open", comment })`: sends no score and rejects with `invalid-attribute` without a comment.
 - Demo: an open feedback example.
 - `after-send="replace|keep"` attribute.
@@ -20,6 +22,8 @@ All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versi
 - Roadmap: M5 Replace with thanks moves ahead of Suggestions and ships as 0.2.0. The M5 plan is folded into `docs/widget.md`.
 - Roadmap: Suggestions is renamed Open feedback (`type="open"`, was `type="suggestion"`) and ships in 0.2.0 with M5; floating placement moves to 0.3.0. The plan is folded into `docs/widget.md`.
 - API contract: the free-text type is `open` instead of `suggestion`.
+- Roadmap: floating placement (M6) moves from 0.3.0 into 0.2.0. Its plan is folded into `docs/widget.md`.
+- Roadmap: a future, unscheduled option to turn off impressions, with what it does to the response rate.
 
 ## 0.1.0
 
