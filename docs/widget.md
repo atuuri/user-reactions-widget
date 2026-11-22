@@ -8,14 +8,14 @@ An inline feedback element that teams drop next to an AI answer or a key flow. I
 ## Element
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1.0-beta.3/dist/user-reactions.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1.0/dist/user-reactions.js" defer></script>
 
 <user-reactions project-key="pk_live_xxx" type="thumbs" surface="assistant-answer" subject="msg_8f2c"
   meta='{"model":"gpt-x","release":"2026.11.2"}' comment="on-negative" lang="fi"
   endpoint="https://your-api.example"></user-reactions>
 ```
 
-Package `@user-reactions/widget`, served from npm by jsDelivr and unpkg. Pin the exact version while in beta: a range such as `@0.1` does not match pre-releases.
+Package `@user-reactions/widget`, served from npm by jsDelivr and unpkg. Pin the version; pre-releases (for example `0.2.0-beta.1`) are published under the npm `next` tag and are not matched by ranges such as `@0.2`.
 
 ### Attributes
 
@@ -47,16 +47,7 @@ Captions under the first and last button name the ends; they are `aria-hidden`, 
 
 ### Default strings
 
-| Key | en | fi | sv |
-|---|---|---|---|
-| thumbs question | Was this helpful? | Oliko tästä apua? | Var detta till hjälp? |
-| csat question | How satisfied are you? | Kuinka tyytyväinen olet? | Hur nöjd är du? |
-| ces question | How easy was this? | Kuinka helppoa tämä oli? | Hur enkelt var detta? |
-| comment placeholder | Tell us more (optional) | Kerro lisää (vapaaehtoinen) | Berätta mer (valfritt) |
-| send | Send | Lähetä | Skicka |
-| thanks | Thanks for your feedback | Kiitos palautteestasi | Tack för din feedback |
-
-`src/strings.ts` holds en, fi and sv for every visible string, including the code-only ones ("Helpful" / "Not helpful", scale labels and end captions); fi and sv await native-speaker review. This table can go once 0.1.0 ships.
+`src/strings.ts` is the source for every built-in string in en, fi and sv: questions, "Helpful" / "Not helpful", scale labels, end captions, placeholder, Send and thanks. A custom `question` is shown as given and is not translated.
 
 ## Behaviour
 
@@ -118,7 +109,7 @@ Same payload and endpoint as the element, with `client: "headless@<version>"`. O
 
 1. **M1 Thumbs** – done (0.1.0-beta.1).
 2. **M2 Scales** – done (0.1.0-beta.3).
-3. **M3 Polish**, released as 0.1.0 (see `docs/releasing.md`). Implemented; native review and the release are pending:
+3. **M3 Polish** – done (0.1.0):
    - **fi/sv strings** for every visible string, including scale labels and captions. `lang` matches the primary subtag (`fi-FI` → `fi`); unknown languages fall back to English. Native-speaker review before the first pilot.
    - **Attribute reset** (behaviour 8): new `id`, nothing selected, comment box and thanks cleared, one new impression when visible. Changing `type`, `lang`, `question` or `comment` re-renders the same way.
    - **Dark-mode check** on dark pages, with and without `--ur-*`: borders, focus ring, selected state, captions, comment box. System colours as fallbacks.

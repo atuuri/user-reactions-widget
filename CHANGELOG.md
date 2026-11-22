@@ -2,7 +2,22 @@
 
 All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.1.0
+
+First stable release; npm `latest` and ranges such as `@0.1` now resolve to it.
+
+### Added
+- Finnish and Swedish for every built-in string, including scale labels and end captions. `lang` matches the primary subtag (`fi-FI` → `fi`); other languages show English. `locale` is still sent as given.
+- Changing `subject`, `meta`, `type`, `lang`, `question` or `comment` resets the element as a new instance: new `id`, nothing selected, comment box and thanks cleared, one new impression once visible. For chat UIs that reuse nodes.
+- Demo: a dark page section, a locale picker (None, English, Finnish, Swedish) and a reused-node example.
+
+### Changed
+- Readable on dark pages without `--ur-*`: borders at 50% of the text colour (`GrayText` fallback), focus ring falls back to the text colour instead of `Highlight`, a stronger selected state and a readable placeholder.
+- The comment box radius is capped at 12 px, so a pill `--ur-radius` only rounds the buttons.
+
+### Fixed
+- After a final failed send, the thanks message is removed and the selection kept; clicking the same button resends.
+- Late responses for an earlier instance no longer lock or thank a reset element.
 
 ### Docs
 - Trimmed the docs: `docs/widget.md` is the single reference (README links to it), M4 moved to `docs/m4-suggestions.md`, shorter `docs/releasing.md`.

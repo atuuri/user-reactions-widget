@@ -6,22 +6,22 @@ Inline feedback element for AI answers and key product flows: thumbs up/down, CS
 - No cookies, no storage, no fingerprinting. Only the ids you pass in.
 - Never breaks the host page: problems surface as a `user-reactions:error` event.
 
-Status: pre-release (`0.1.0-beta.3`, milestone M2 done). Full reference: attributes, behaviour, events, headless client and styling in the [widget spec](https://github.com/atuuri/user-reactions-widget/blob/main/docs/widget.md); API contract in [`openapi.yaml`](https://github.com/atuuri/user-reactions-widget/blob/main/docs/api/openapi.yaml).
+Status: `0.1.0` (milestones M1–M3: thumbs, CSAT/CES scales, en/fi/sv). Full reference: attributes, behaviour, events, headless client and styling in the [widget spec](https://github.com/atuuri/user-reactions-widget/blob/main/docs/widget.md); API contract in [`openapi.yaml`](https://github.com/atuuri/user-reactions-widget/blob/main/docs/api/openapi.yaml).
 
 ## Install
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1.0-beta.3/dist/user-reactions.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1.0/dist/user-reactions.js" defer></script>
 <user-reactions project-key="pk_live_xxx" type="thumbs"
   surface="assistant-answer" subject="msg_8f2c" comment="on-negative"
   endpoint="https://your-api.example">
 </user-reactions>
 ```
 
-Or `npm install @user-reactions/widget@next`, then `import "@user-reactions/widget";` (registers `<user-reactions>`; also exports `sendFeedback` for native apps and servers).
+Or `npm install @user-reactions/widget`, then `import "@user-reactions/widget";` (registers `<user-reactions>`; also exports `sendFeedback` for native apps and servers).
 
 - There is no hosted API yet, so `endpoint` is required: your own server or the dev mock below.
-- Pin the exact version in the script tag: `@0.1` does not match pre-releases. For a fixed file, add the `integrity` hash from the [release notes](https://github.com/atuuri/user-reactions-widget/releases).
+- Pin the version in the script tag. For a fixed file, add the `integrity` hash from the [release notes](https://github.com/atuuri/user-reactions-widget/releases).
 - Your server must allow CORS preflight from the page origin with the `Content-Type` and `X-Project-Key` headers.
 
 ```js
