@@ -1,6 +1,8 @@
 # user-reactions
 
-Inline feedback element for AI answers and key product flows: thumbs up/down, CSAT and CES, with an optional comment and the context of what was rated.
+`<user-reactions>` is a feedback element you place in a user flow, such as a knowledge base answer or an AI chat response. Built to measure changes in user experience with light setup.
+
+The element captures a rating (thumbs up/down, CSAT or CES), an optional comment and the context you pass in (`surface`, `subject`, `meta`), counts impressions so the response rate is measurable, and sends it to your feedback API.
 
 - Vanilla Web Component, no runtime dependencies, under 8 kB min+gzip.
 - No cookies, no storage, no fingerprinting. Only the ids you pass in.
