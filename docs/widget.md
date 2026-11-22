@@ -1,6 +1,6 @@
 # Widget spec
 
-Status: draft v1 (2026-11-12). The single source for behaviour, attributes, events and styling; the README only links here. Future work: [M4 suggestions](m4-suggestions.md).
+Status: draft v1 (2026-11-12). The single source for behaviour, attributes, events and styling; the README only links here. Future work: [M4 suggestions](m4-suggestions.md), [M5 replace with thanks](m5-thanks.md), [M6 floating placement](m6-floating.md).
 
 ## Purpose
 An inline feedback element that teams drop next to an AI answer or a key flow. It captures a rating, an optional comment and the context of what was rated (`surface`, `subject`, `meta`), and sends it to the ingest API (`docs/api/openapi.yaml`). The value is the context, not the buttons.
@@ -117,6 +117,8 @@ Same payload and endpoint as the element, with `client: "headless@<version>"`. O
    - **Beta findings**: cap the comment box radius (about 12 px) so a pill `--ur-radius` does not round it; after a final failed send, remove the thanks message and keep the selection, so clicking again resends.
    - **0.1.0**: README drops the pre-release notes; the release takes npm `latest`.
 4. **M4 Suggestions**, released as 0.2.0: see [m4-suggestions.md](m4-suggestions.md).
+5. **M5 Replace with thanks**, released as 0.3.0: after the final send, the element is replaced by the thanks message by default (`after-send="keep"` opts out). See [m5-thanks.md](m5-thanks.md).
+6. **M6 Floating placement**, released as 0.4.0: `placement="floating"` shows a card in the bottom-right corner; `inline` stays the default. See [m6-floating.md](m6-floating.md).
 
 ## Acceptance criteria (M3)
 
