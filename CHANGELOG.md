@@ -2,7 +2,9 @@
 
 All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versioning](https://semver.org/).
 
-## Unreleased
+## 0.2.0
+
+**Upgrading from 0.1:** the element now replaces itself with the thanks text once feedback is final. Add `after-send="keep"` to keep the 0.1 behaviour. The ingest server must accept `type: "open"` before you use `type="open"`.
 
 ### Changed
 - **Default behaviour:** once feedback is final (the rating is accepted, or the comment when the comment box is shown), the element is replaced by the thanks message: question, buttons and comment box are removed, focus inside the element moves to the thanks text, and a short fade runs only under `prefers-reduced-motion: no-preference`. To keep the 0.1 behaviour, add `after-send="keep"`.

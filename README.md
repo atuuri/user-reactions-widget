@@ -8,12 +8,12 @@ The element captures a rating (thumbs up/down, CSAT or CES), an optional comment
 - No cookies, no storage, no fingerprinting. Only the ids you pass in.
 - Never breaks the host page: problems surface as a `user-reactions:error` event.
 
-Status: `0.1.0` (milestones M1–M3: thumbs, CSAT/CES scales, en/fi/sv). Full reference: attributes, behaviour, events, headless client and styling in the [widget spec](https://github.com/atuuri/user-reactions-widget/blob/main/docs/widget.md); API contract in [`openapi.yaml`](https://github.com/atuuri/user-reactions-widget/blob/main/docs/api/openapi.yaml).
+Status: `0.2.0` (milestones M1–M6: thumbs, CSAT/CES scales, en/fi/sv, thanks replacement, open feedback, floating placement). Full reference: attributes, behaviour, events, headless client and styling in the [widget spec](https://github.com/atuuri/user-reactions-widget/blob/main/docs/widget.md); API contract in [`openapi.yaml`](https://github.com/atuuri/user-reactions-widget/blob/main/docs/api/openapi.yaml).
 
 ## Install
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1.0/dist/user-reactions.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.2.0/dist/user-reactions.js" defer></script>
 <user-reactions project-key="pk_live_xxx" type="thumbs"
   surface="assistant-answer" subject="msg_8f2c" comment="on-negative"
   endpoint="https://your-api.example">
@@ -23,6 +23,7 @@ Status: `0.1.0` (milestones M1–M3: thumbs, CSAT/CES scales, en/fi/sv). Full re
 Or `npm install @user-reactions/widget`, then `import "@user-reactions/widget";` (registers `<user-reactions>`; also exports `sendFeedback` for native apps and servers).
 
 - There is no hosted API yet, so `endpoint` is required: your own server or the dev mock below.
+- Upgrading from 0.1: once feedback is final, the element is now replaced by the thanks text. Add `after-send="keep"` to keep the question and buttons as before.
 - For a card in the bottom-right corner instead of inline, add `placement="floating"` and put the element at the end of `<body>` (from 0.2.0).
 - Pin the version in the script tag. For a fixed file, add the `integrity` hash from the [release notes](https://github.com/atuuri/user-reactions-widget/releases).
 - Your server must allow CORS preflight from the page origin with the `Content-Type` and `X-Project-Key` headers.
