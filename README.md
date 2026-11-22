@@ -1,6 +1,8 @@
 # user-reactions
 
-Inline feedback element for AI answers and key product flows: thumbs up/down, CSAT and CES, with an optional comment and the context of what was rated.
+A thumbs-down on its own tells you little. To act on feedback about an AI answer or a step in your product, you need to know what was rated (which message, model, prompt version or release) and how many people saw the question without answering. A plain button records the click and loses that context.
+
+`<user-reactions>` is an element you place next to the answer or flow. It captures a rating (thumbs up/down, CSAT or CES), an optional comment and the context you pass in (`surface`, `subject`, `meta`), counts impressions so the response rate is measurable, and sends it to your feedback API.
 
 - Vanilla Web Component, no runtime dependencies, under 8 kB min+gzip.
 - No cookies, no storage, no fingerprinting. Only the ids you pass in.
