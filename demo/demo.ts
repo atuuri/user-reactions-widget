@@ -15,6 +15,7 @@ const EXTRA: [string, string] = ['Is there a student discount?', 'Yes, 15% with 
 const chat = document.getElementById('chat')!;
 const log = document.getElementById('log')!;
 const outage = document.getElementById('outage') as HTMLInputElement;
+const locale = document.getElementById('locale') as HTMLSelectElement;
 let n = 0;
 
 const endpoint = () => (outage.checked ? '/mock/fail' : '/mock');
@@ -39,6 +40,7 @@ function addTurn([q, a]: [string, string]) {
     endpoint: endpoint(),
   }))
     widget.setAttribute(k, v);
+  setLang(widget);
   bot.append(p, widget);
   chat.insertBefore(user, more);
   chat.insertBefore(bot, more);
@@ -72,6 +74,16 @@ const syncEndpoint = () => {
 };
 outage.onchange = syncEndpoint;
 syncEndpoint();
+
+// Locale picker: "None" removes lang (English default); otherwise sets it on every widget.
+// A lang change resets each widget as a new instance (behaviour 8).
+function setLang(w: Element) {
+  if (locale.value) w.setAttribute('lang', locale.value);
+  else w.removeAttribute('lang');
+}
+const syncLang = () => document.querySelectorAll('user-reactions').forEach(setLang);
+locale.onchange = syncLang;
+syncLang();
 document.getElementById('clear')!.onclick = () => (log.textContent = '');
 
 // Reused node: a new subject resets the element (behaviour 8).
