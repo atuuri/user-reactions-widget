@@ -2,6 +2,8 @@
 
 All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
 ## 0.2.0
 
 **Upgrading from 0.1:** the element now replaces itself with the thanks text once feedback is final. Add `after-send="keep"` to keep the 0.1 behaviour. The ingest server must accept `type: "open"` before you use `type="open"`.
