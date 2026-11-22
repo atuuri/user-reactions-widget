@@ -8,7 +8,7 @@ A feedback element that teams drop next to an AI answer or a key flow, inline by
 ## Element
 
 ```html
-<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.1.0/dist/user-reactions.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/@user-reactions/widget@0.2.0/dist/user-reactions.js" defer></script>
 
 <user-reactions project-key="pk_live_xxx" type="thumbs" surface="assistant-answer" subject="msg_8f2c"
   meta='{"model":"gpt-x","release":"2026.11.2"}' comment="on-negative" lang="fi"
@@ -167,9 +167,9 @@ Same payload and endpoint as the element, with `client: "headless@<version>"`. O
    - **Reduced motion**: transitions only under `prefers-reduced-motion: no-preference`, with a test.
    - **Beta findings**: cap the comment box radius (about 12 px) so a pill `--ur-radius` does not round it; after a final failed send, remove the thanks message and keep the selection, so clicking again resends.
    - **0.1.0**: README drops the pre-release notes; the release takes npm `latest`.
-4. **M5 Replace with thanks**, done, ships in 0.2.0 (moved ahead of M4): once feedback is final, the element is replaced by the thanks message by default (`after-send="keep"` opts out); custom `thanks` text. Default change listed in the changelog with the opt-out; README install snippet moves to 0.2.0 at release. Demo examples for both modes.
-5. **M4 Open feedback**, done, ships with M5 in 0.2.0: `type="open"`, a "Give feedback" toggle with a free-text box and no rating ([Open feedback](#open-feedback-typeopen)). Planned as "Suggestions" (`type="suggestion"`); renamed because it takes any open feedback, not only improvement ideas. Needs the ingest server to accept `type: "open"` before release. Demo example.
-6. **M6 Floating placement**, current, ships with M4 and M5 in 0.2.0 (moved from 0.3.0): `placement="floating"` shows a card in the bottom-right corner; `inline` stays the default ([Floating placement](#floating-placement-placementfloating)). New `close` string in fi/sv for native review. Demo example and README note.
+4. **M5 Replace with thanks** – done (0.2.0; moved ahead of M4): once feedback is final, the element is replaced by the thanks message by default (`after-send="keep"` opts out); custom `thanks` text. Default change listed in the changelog with the opt-out; README install snippet moves to 0.2.0 at release. Demo examples for both modes.
+5. **M4 Open feedback** – done (0.2.0): `type="open"`, a "Give feedback" toggle with a free-text box and no rating ([Open feedback](#open-feedback-typeopen)). Planned as "Suggestions" (`type="suggestion"`); renamed because it takes any open feedback, not only improvement ideas. Needs the ingest server to accept `type: "open"` before release. Demo example.
+6. **M6 Floating placement** – done (0.2.0; moved from 0.3.0): `placement="floating"` shows a card in the bottom-right corner; `inline` stays the default ([Floating placement](#floating-placement-placementfloating)). New `close` string in fi/sv for native review. Demo example and README note.
 7. **Impressions opt-out**, future, not scheduled: see [below](#future-impressions-opt-out-not-scheduled).
 
 ## Acceptance criteria (M6)
