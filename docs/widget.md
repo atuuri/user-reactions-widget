@@ -1,9 +1,9 @@
 # Widget spec
 
-Status: draft v1 (2026-11-12). The single source for behaviour, attributes, events and styling; the README only links here. Future work: [M4 suggestions](m4-suggestions.md), [M6 floating placement](m6-floating.md).
+Status: draft v1 (2026-11-12). The single source for behaviour, attributes, events and styling; the README only links here. Future work: [M6 floating placement](m6-floating.md).
 
 ## Purpose
-An inline feedback element that teams drop next to an AI answer or a key flow. It captures a rating, an optional comment and the context of what was rated (`surface`, `subject`, `meta`), and sends it to the ingest API (`docs/api/openapi.yaml`). The value is the context, not the buttons.
+An inline feedback element that teams drop next to an AI answer or a key flow. It captures a rating, an optional comment (or, with `type="open"`, open feedback with no rating) and the context of what was rated (`surface`, `subject`, `meta`), and sends it to the ingest API (`docs/api/openapi.yaml`). The value is the context, not the buttons.
 
 ## Element
 
@@ -22,12 +22,12 @@ Package `@user-reactions/widget`, served from npm by jsDelivr and unpkg. Pin the
 | Attribute | Required | Values | Notes |
 |---|---|---|---|
 | `project-key` | yes | string | Public, write-only project key. Sent as `X-Project-Key`. |
-| `type` | yes | `thumbs`, `csat`, `ces` | Scale to render. |
+| `type` | yes | `thumbs`, `csat`, `ces`, `open` | Scale to render, or `open` for free text with no rating ([Open feedback](#open-feedback-typeopen)). |
 | `surface` | yes | string ≤ 100 | Where in the product, e.g. `assistant-answer`, `checkout`. |
 | `subject` | no | string ≤ 200 | What was rated, e.g. message id, order step. |
 | `meta` | no | JSON object, string values, ≤ 20 keys | Model, prompt version, release, experiment. Invalid → ignored, `invalid-meta` fired. |
-| `comment` | no | `off` (default), `optional`, `on-negative` | `on-negative`: comment box only for thumbs down, CSAT 1–2, CES 1–3. |
-| `question` | no | string | Overrides the question. `question=""` hides it; the default text still labels the button group for screen readers. |
+| `comment` | no | `off` (default), `optional`, `on-negative` | `on-negative`: comment box only for thumbs down, CSAT 1–2, CES 1–3. Ignored for `open`, which always has a text box. |
+| `question` | no | string | Overrides the question. `question=""` hides it; the default text still labels the button group for screen readers. For `open` it relabels the toggle, and an empty value keeps the default. |
 | `after-send` | no | `replace` (default), `keep` | After the final send, `replace` leaves only the thanks text; `keep` keeps the question and buttons (0.1 behaviour). Unknown values act as `replace`. Read when feedback becomes final; changing it does not reset. |
 | `thanks` | no | string | Overrides the thanks text in both modes, shown as given and not translated. An empty value keeps the default. Changing it does not reset. |
 | `lang` | no | `en` (default), `fi`, `sv` | Built-in strings, matched by primary subtag (`fi-FI` → `fi`); other languages show English. Sent as `locale` as given. |
@@ -40,6 +40,7 @@ Package `@user-reactions/widget`, served from npm by jsDelivr and unpkg. Pin the
 | `thumbs` | 👍 / 👎 (icons, labelled) | 1 = up, 0 = down |
 | `csat` | 1–5 | 5 = very satisfied |
 | `ces` | 1–7 | 7 = very easy |
+| `open` | none: a toggle and a text box | no score; `comment` is required |
 
 Scale buttons show the number and are labelled "`n` of `max` – `point`" (also the tooltip). Points, lowest first:
 - `csat`: very dissatisfied, dissatisfied, neutral, satisfied, very satisfied.
@@ -49,7 +50,7 @@ Captions under the first and last button name the ends; they are `aria-hidden`, 
 
 ### Default strings
 
-`src/strings.ts` is the source for every built-in string in en, fi and sv: questions, "Helpful" / "Not helpful", scale labels, end captions, placeholder, Send and thanks. A custom `question` or `thanks` is shown as given and is not translated.
+`src/strings.ts` is the source for every built-in string in en, fi and sv: questions, "Helpful" / "Not helpful", scale labels, end captions, placeholder, Send and thanks, and for `open` the toggle label ("Give feedback") and its placeholder ("What would you like to tell us?"). `open` uses the same Send and thanks strings as ratings. A custom `question` or `thanks` is shown as given and is not translated.
 
 ## Behaviour
 
@@ -68,6 +69,23 @@ Captions under the first and last button name the ends; they are `aria-hidden`, 
 7. **Failure**: on a network error, 429 or 5xx, retry once after 1 s; other 4xx are not retried. If it still fails, fire `error` and keep the UI usable: nothing is replaced, the thanks message is removed, the selection stays and clicking the same button again resends; a failed comment keeps its text. Never throw into the host page.
 8. **Attribute changes**: changing `subject`, `meta`, `type`, `lang`, `question` or `comment` resets the element as a new instance: new `id`, nothing selected, comment box and thanks cleared, and one new impression once visible. This also brings back the full element after `replace`. Needed for chat UIs that reuse nodes. Requests already sent keep their old `id` and no longer affect the UI. `endpoint` and `project-key` are read at send time, `after-send` and `thanks` when thanks shows; none of them reset.
 
+### Open feedback (`type="open"`)
+
+A standalone element with no rating: a place for any free-text feedback (ideas, problems, questions), e.g. in a page footer or settings screen. It is not combined with a rating element.
+
+```html
+<user-reactions project-key="pk_live_xxx" type="open"
+  surface="billing" subject="invoices-page" endpoint="https://api.example.com"></user-reactions>
+```
+
+1. **Render**: a text `<button>` (part `toggle`, "Give feedback" or `question`) with `aria-expanded="false"` and `aria-controls` pointing at the text box. No network calls.
+2. **Impression**: as for ratings, with `type: "open"`.
+3. **Open**: the toggle shows the text box (max 2000 chars) and Send, sets `aria-expanded="true"` and focuses the box. The toggle again, or Escape inside the box, closes it, keeps the text and returns focus to the toggle.
+4. **Send**: `POST /v1/feedback` with `id`, `type: "open"`, `comment`, and `surface`, `subject`, `meta`, `locale`, `client` as for ratings. No `score`. An empty Send does nothing. The feedback is final once the API accepts it.
+5. **Thanks**: `after-send` applies as in behaviour 6. With `replace` (default) the toggle and box are replaced by the thanks text, and focus inside the element moves to it. With `keep` the box closes and clears, thanks shows in the `thanks` part, focus inside the element returns to the toggle, and the next feedback gets a new `id`.
+6. **Failure**: same retry rule. On final failure fire `error`, keep the box open with the text and show no thanks; Send again resends with the same `id`.
+7. **Attribute changes**: as behaviour 8.
+
 Requests are JSON `POST`s with an `X-Project-Key` header, so browsers send a CORS preflight: the server must allow the page origin and the `Content-Type` and `X-Project-Key` headers.
 
 ## Events (CustomEvent, bubbles, composed)
@@ -75,7 +93,7 @@ Requests are JSON `POST`s with an `X-Project-Key` header, so browsers send a COR
 | Event | `detail` | Fires |
 |---|---|---|
 | `user-reactions:rated` | `{ id, type, score, surface, subject }` | On selection, before the request completes |
-| `user-reactions:commented` | `{ id, comment }` | Once the API accepts the comment |
+| `user-reactions:commented` | `{ id, comment }` | Once the API accepts the comment, or the open feedback for `type="open"` |
 | `user-reactions:error` | `{ code, message }` | See below |
 
 | `code` | When |
@@ -97,12 +115,14 @@ import { sendFeedback } from "@user-reactions/widget";
 const { id } = await sendFeedback({ projectKey, type: "thumbs", score: 0, surface, subject, meta, comment, endpoint });
 ```
 
+For open feedback, pass `type: "open"` and a `comment` and no `score`: `sendFeedback({ projectKey, type: "open", surface, comment, endpoint })`. It never sends a score for `open`, and rejects with `invalid-attribute` and sends nothing when the comment is missing or blank.
+
 Same payload and endpoint as the element, with `client: "headless@<version>"`. Optional `id` updates an earlier item. Without `endpoint` it rejects with `invalid-attribute` and sends nothing. Rejects with `ReactionsError` (`code` as above, plus `status` for `http`) after the same retry rule. Importing outside a browser does not register the element.
 
 ## Styling
 
 - Custom properties: `--ur-font`, `--ur-text`, `--ur-muted`, `--ur-accent`, `--ur-bg`, `--ur-radius`, `--ur-gap`.
-- Parts: `question`, `button`, `button-selected`, `scale-label` (csat/ces end captions), `comment`, `send`, `thanks`.
+- Parts: `question`, `button`, `button-selected`, `scale-label` (csat/ces end captions), `toggle` (open feedback), `comment`, `send`, `thanks`.
 - Inherits font; looks native on light and dark pages. Colours derive from the text colour (borders at 50%, focus ring and selected state at full strength) unless `--ur-*` is set, with system colours (`GrayText`) as fallbacks. Compact: one line for thumbs, scales add a caption line.
 - The comment box radius is capped at 12 px, so a pill `--ur-radius` only rounds the buttons.
 - Transitions and the fade after `replace` run only under `prefers-reduced-motion: no-preference`.
@@ -111,6 +131,7 @@ Same payload and endpoint as the element, with `client: "headless@<version>"`. O
 
 - Labelled buttons ("Helpful", "Not helpful", "1 of 5 – very dissatisfied"), `aria-pressed` on the selected one.
 - Scales are one Tab stop (selected button, else the first). ←/→ and ↑/↓ move focus without selecting, Home/End jump to the ends, Enter/Space select. Thumbs keep both buttons in the Tab order.
+- Open feedback: the toggle is a real `<button>` with `aria-expanded` and `aria-controls`; Escape in the box closes it and returns focus to the toggle.
 - Thanks is announced with `role="status"`. After `replace`, focus that was inside the element moves to the thanks text.
 
 ## Milestones
@@ -124,9 +145,19 @@ Same payload and endpoint as the element, with `client: "headless@<version>"`. O
    - **Reduced motion**: transitions only under `prefers-reduced-motion: no-preference`, with a test.
    - **Beta findings**: cap the comment box radius (about 12 px) so a pill `--ur-radius` does not round it; after a final failed send, remove the thanks message and keep the selection, so clicking again resends.
    - **0.1.0**: README drops the pre-release notes; the release takes npm `latest`.
-4. **M5 Replace with thanks**, current, released as 0.2.0 (moved ahead of M4): once feedback is final, the element is replaced by the thanks message by default (`after-send="keep"` opts out); custom `thanks` text. Default change listed in the changelog with the opt-out; README install snippet moves to 0.2.0 at release. Demo examples for both modes.
-5. **M4 Suggestions**, released as 0.3.0: see [m4-suggestions.md](m4-suggestions.md).
-6. **M6 Floating placement**, released as 0.4.0: `placement="floating"` shows a card in the bottom-right corner; `inline` stays the default. See [m6-floating.md](m6-floating.md).
+4. **M5 Replace with thanks**, done, released in 0.2.0 (moved ahead of M4): once feedback is final, the element is replaced by the thanks message by default (`after-send="keep"` opts out); custom `thanks` text. Default change listed in the changelog with the opt-out; README install snippet moves to 0.2.0 at release. Demo examples for both modes.
+5. **M4 Open feedback**, current, released together with M5 in 0.2.0: `type="open"`, a "Give feedback" toggle with a free-text box and no rating ([Open feedback](#open-feedback-typeopen)). Planned as "Suggestions" (`type="suggestion"`); renamed because it takes any open feedback, not only improvement ideas. Needs the ingest server to accept `type: "open"` before release. Demo example.
+6. **M6 Floating placement**, released as 0.3.0: `placement="floating"` shows a card in the bottom-right corner; `inline` stays the default. See [m6-floating.md](m6-floating.md).
+
+## Acceptance criteria (M4)
+
+- Renders only the toggle; no rating buttons, no score sent.
+- The toggle opens and closes the box with `aria-expanded`; Escape closes it and returns focus to the toggle.
+- Send matches the `open` example in `docs/api/openapi.yaml` (apart from `id` and `client`); an empty Send posts nothing.
+- Default `replace`: after acceptance only the thanks text is left; `keep`: the toggle stays and each new feedback has a new `id`. `commented` fires after acceptance; a final failure keeps the text and fires `error`.
+- One impression per element instance, with `type: "open"`.
+- `sendFeedback({ type: "open", comment })` sends no score and rejects with `invalid-attribute` without a comment.
+- IIFE bundle ≤ 8 kB min+gzip.
 
 ## Acceptance criteria (M5)
 

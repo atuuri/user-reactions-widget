@@ -4,7 +4,7 @@
 // Colours come from the host text colour, --ur-* variables or system colours, so the
 // element reads on light and dark pages without configuration.
 
-import { type ErrorCode, type FeedbackPayload, type FeedbackType, type Meta, VERSION, clean, post, uuid } from './client.js';
+import { type ErrorCode, type FeedbackPayload, type FeedbackType, type Meta, type RatingType, VERSION, clean, post, uuid } from './client.js';
 import { type Strings, language, strings } from './strings.js';
 
 export const TAG = 'user-reactions';
@@ -50,9 +50,9 @@ export function parseMeta(raw: string): Meta | undefined {
   }
 }
 
-/** Scale size for csat/ces, and the highest score that counts as negative for comment="on-negative". */
-const MAX: Record<FeedbackType, number> = { thumbs: 2, csat: 5, ces: 7 };
-const NEG: Record<FeedbackType, number> = { thumbs: 0, csat: 2, ces: 3 };
+/** Scale size for csat/ces (also the list of supported types), and the highest score that counts as negative for comment="on-negative". */
+const MAX: Record<FeedbackType, number> = { thumbs: 2, csat: 5, ces: 7, open: 0 };
+const NEG: Record<RatingType, number> = { thumbs: 0, csat: 2, ces: 3 };
 
 const cap = (t: string) => t[0].toUpperCase() + t.slice(1);
 
@@ -142,7 +142,7 @@ export class UserReactionsElement extends Base {
     const sr = this.sr!;
     const focused = sr.activeElement;
     this.done = true;
-    for (const n of sr.querySelectorAll('[part=question],.g,form')) n.remove();
+    for (const n of sr.querySelectorAll('[part=question],[part=toggle],.g,form')) n.remove();
     const t = this.$('[part=thanks]');
     t.textContent = this.thx();
     t.parentElement!.classList.add('d');
@@ -211,6 +211,28 @@ export class UserReactionsElement extends Base {
     };
     this.fid = uuid();
 
+    const form = `<form ${ln} hidden><textarea part="comment" id="t" maxlength="2000"></textarea><button part="send" type="submit"></button></form>`;
+    const ta = () => this.$<HTMLTextAreaElement>('textarea');
+    const onSubmit = () =>
+      this.$('form').addEventListener('submit', (e) => {
+        e.preventDefault();
+        this.submit().catch((err) => this.fail('internal', String(err?.message || err)));
+      });
+
+    // Open feedback: a toggle that shows the text box; no rating. The question attribute relabels the toggle.
+    if (type == 'open') {
+      sr.innerHTML =
+        `<style>${CSS}</style><div ${ln} class="r"><button part="toggle" aria-expanded="false" aria-controls="t"></button>` +
+        `<span part="thanks" role="status"></span></div>${form}`;
+      this.$('[part=toggle]').textContent = this.attr('question') || s.open;
+      this.$('[part=toggle]').addEventListener('click', () => this.guard(() => this.expand(!!this.$('form').hidden)));
+      this.$('form').addEventListener('keydown', (e) => (e as KeyboardEvent).key == 'Escape' && this.guard(() => this.expand(false)));
+      ta().placeholder = s.openPlaceholder;
+      ta().setAttribute('aria-label', s.openPlaceholder);
+      this.$('[part=send]').textContent = s.send;
+      return onSubmit();
+    }
+
     // Thumbs: 👍 (1) then 👎 (0). Scales: 1..max, one Tab stop (roving tabindex) and end captions.
     const scale = type != 'thumbs';
     const max = MAX[type!];
@@ -222,8 +244,7 @@ export class UserReactionsElement extends Base {
       `<style>${CSS}</style><div ${ln} class="r${scale ? ' s' : ''}"><span part="question" id="q"></span>` +
       `<span class="g" role="group" aria-labelledby="q"><span class="r">${buttons}</span>` +
       (scale ? `<span part="scale-label" aria-hidden="true"><span></span><span></span></span>` : '') +
-      `</span><span part="thanks" role="status"></span></div>` +
-      `<form ${ln} hidden><textarea part="comment" maxlength="2000"></textarea><button part="send" type="submit"></button></form>`;
+      `</span><span part="thanks" role="status"></span></div>${form}`;
 
     // question="" shows only the buttons; the hidden text still labels the group for screen readers.
     const q = this.$('[part=question]');
@@ -243,14 +264,20 @@ export class UserReactionsElement extends Base {
       b.title = label;
       b.addEventListener('click', () => this.guard(() => this.rate(+b.dataset.s!)));
     }
-    const ta = this.$<HTMLTextAreaElement>('textarea');
-    ta.placeholder = s.placeholder;
-    ta.setAttribute('aria-label', s.placeholder);
+    ta().placeholder = s.placeholder;
+    ta().setAttribute('aria-label', s.placeholder);
     this.$('[part=send]').textContent = s.send;
-    this.$('form').addEventListener('submit', (e) => {
-      e.preventDefault();
-      this.submit().catch((err) => this.fail('internal', String(err?.message || err)));
-    });
+    onSubmit();
+  }
+
+  /** Open feedback: shows or hides the text box. Opening focuses it; closing keeps the text and returns focus to the toggle. */
+  private expand(open: boolean, focus = true) {
+    if (this.done) return;
+    const t = this.$('[part=toggle]');
+    this.$('form').hidden = !open;
+    t.setAttribute('aria-expanded', String(open));
+    if (open) this.$('[part=thanks]').textContent = '';
+    if (focus) (open ? this.$('textarea') : t).focus();
   }
 
   private $<T extends HTMLElement = HTMLElement>(sel: string): T {
@@ -306,7 +333,7 @@ export class UserReactionsElement extends Base {
   /** Queues one feedback POST; resolves true on success. Requests stay in click order. */
   private send(comment?: string): Promise<boolean> {
     const { type, surface, subject, meta, locale } = this.c!;
-    const payload: FeedbackPayload = clean({ id: this.fid, type, score: this.score!, surface, subject, meta, comment, locale, client: `widget@${VERSION}` });
+    const payload: FeedbackPayload = clean({ id: this.fid, type, score: this.score ?? undefined, surface, subject, meta, comment, locale, client: `widget@${VERSION}` });
     const g = this.gen;
     const run = () =>
       post(this.attr('endpoint'), '/v1/feedback', this.attr('project-key') || '', payload).then(
@@ -343,7 +370,7 @@ export class UserReactionsElement extends Base {
       b.setAttribute('part', on ? 'button button-selected' : 'button');
       if (on) this.rove(b);
     }
-    const ask = c.mode == 'optional' || (c.mode == 'on-negative' && score <= NEG[c.type]);
+    const ask = c.mode == 'optional' || (c.mode == 'on-negative' && score <= NEG[c.type as RatingType]);
     this.$('form').hidden = !ask;
     this.$('[part=thanks]').textContent = ask ? '' : this.thx();
     this.emit<RatedDetail>('rated', { id: this.fid, type: c.type, score, surface: c.surface, subject: c.subject });
@@ -351,11 +378,29 @@ export class UserReactionsElement extends Base {
   }
 
   private async submit() {
-    if (this.done || this.score == null) return;
+    const open = this.c!.type == 'open';
+    if (this.done || (this.score == null && !open)) return;
     const ta = this.$<HTMLTextAreaElement>('textarea');
     const btn = this.$<HTMLButtonElement>('[part=send]');
     const comment = ta.value.trim().slice(0, 2000);
     const keep = this.keep();
+    if (open) {
+      if (!comment) return; // an empty Send does nothing
+      const g = this.gen;
+      const id = this.fid;
+      btn.disabled = true;
+      const ok = await this.send(comment);
+      btn.disabled = false;
+      if (!ok || g != this.gen || this.done) return; // error already fired: the box stays open with the text
+      if (keep) {
+        // Each new piece of open feedback is its own item.
+        this.fid = uuid();
+        ta.value = '';
+        this.expand(false, !!this.sr!.activeElement);
+        this.$('[part=thanks]').textContent = this.thx();
+      } else this.replace();
+      return this.emit<CommentedDetail>('commented', { id, comment });
+    }
     if (comment || !keep) {
       const g = this.gen;
       btn.disabled = true;

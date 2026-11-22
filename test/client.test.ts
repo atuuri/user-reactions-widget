@@ -32,6 +32,21 @@ describe('sendFeedback', () => {
     expect(Object.keys(net.calls[0].body).sort()).toEqual(['client', 'id', 'score', 'surface', 'type']);
   });
 
+  it('type "open" sends the comment and no score, even if one is passed', async () => {
+    const net = mockFetch();
+    const { id } = await sendFeedback({ ...base, type: 'open', comment: 'Add CSV export', score: 3 as never });
+    expect(net.calls[0].body).toEqual({ id, type: 'open', surface: 'assistant-answer', comment: 'Add CSV export', client: `headless@${VERSION}` });
+    expect(validateRequest('/v1/feedback', net.calls[0].body)).toEqual([]);
+  });
+
+  it.each([undefined, '', '   '])('type "open" without a comment (%j) rejects with invalid-attribute and sends nothing', async (comment) => {
+    const net = mockFetch();
+    const err = await sendFeedback({ ...base, type: 'open', comment: comment as string, score: undefined }).catch((e) => e);
+    expect(err).toBeInstanceOf(ReactionsError);
+    expect(err.code).toBe('invalid-attribute');
+    expect(net.calls).toHaveLength(0);
+  });
+
   it('re-uses a given id so a later call updates the same item', async () => {
     const net = mockFetch();
     const { id } = await sendFeedback(base);

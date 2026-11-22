@@ -42,10 +42,10 @@ paths:
                   surface: checkout
                   locale: en
                   client: widget@0.1.0
-              suggestion:
+              open:
                 value:
                   id: 3f6b2c7e-8a1d-4e5f-9b2a-6c4d8e0f1a23
-                  type: suggestion
+                  type: open
                   surface: billing
                   subject: invoices-page
                   comment: Let me export invoices as CSV.
@@ -95,10 +95,10 @@ components:
       additionalProperties: false
       description: >
         A rating (thumbs, csat, ces) carries a score and an optional comment.
-        A suggestion is free text with no rating: comment is required and score is not allowed.
+        Open feedback (type open) is free text with no rating: comment is required and score is not allowed.
       required: [id, type, surface]
       if:
-        properties: { type: { const: suggestion } }
+        properties: { type: { const: open } }
       then:
         required: [comment]
         properties: { score: false }
@@ -111,10 +111,10 @@ components:
           description: Client-generated. Re-posting the same id updates the item.
         type:
           type: string
-          enum: [thumbs, csat, ces, suggestion]
+          enum: [thumbs, csat, ces, open]
         score:
           type: integer
-          description: thumbs 0–1, csat 1–5, ces 1–7. Server validates range per type. Not sent for suggestion.
+          description: thumbs 0–1, csat 1–5, ces 1–7. Server validates range per type. Not sent for open.
           minimum: 0
           maximum: 7
         surface: { type: string, minLength: 1, maxLength: 100 }
@@ -133,7 +133,7 @@ components:
       properties:
         type:
           type: string
-          enum: [thumbs, csat, ces, suggestion]
+          enum: [thumbs, csat, ces, open]
         surface: { type: string, minLength: 1, maxLength: 100 }
         subject: { type: string, maxLength: 200 }
         client: { type: string, maxLength: 50 }

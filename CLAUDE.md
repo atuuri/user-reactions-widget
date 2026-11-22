@@ -8,7 +8,7 @@ Never add server code, pricing, customer names, business notes or secrets to thi
 
 ## Source of truth
 - `docs/widget.md`: behaviour, attributes, events, current milestone and acceptance criteria. The README links here; don't duplicate the spec in the README.
-- `docs/m4-suggestions.md` (next), `docs/m6-floating.md`: later milestones. Read only when working on that milestone.
+- `docs/m6-floating.md`: the next milestone. Read only when working on it.
 - `docs/api/openapi.yaml`: the ingest API contract the widget calls.
 
 If code and spec disagree, update the spec in the same PR or ask first.

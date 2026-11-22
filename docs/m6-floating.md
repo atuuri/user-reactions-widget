@@ -1,8 +1,8 @@
-# M6: Floating placement (planned, 0.4.0)
+# M6: Floating placement (planned, 0.3.0)
 
 Read only when working on M6. Everything not stated here works as in [widget.md](widget.md).
 
-`placement="floating"` shows the element as a small card fixed to the bottom-right corner of the viewport instead of inline in the page flow. It is opt-in; `inline` stays the default. It works with every `type`, including `suggestion`.
+`placement="floating"` shows the element as a small card fixed to the bottom-right corner of the viewport instead of inline in the page flow. It is opt-in; `inline` stays the default. It works with every `type`, including `open`.
 
 ```html
 <!-- Put it at the end of <body>, so it comes last in the Tab order -->

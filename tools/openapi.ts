@@ -29,7 +29,7 @@ function resolve(s: Schema): Schema {
 }
 
 function check(schema: Schema | boolean, v: unknown, at: string, out: string[]) {
-  // Boolean schemas: `false` forbids the value (e.g. `score: false` for suggestions), `true` allows anything.
+  // Boolean schemas: `false` forbids the value (e.g. `score: false` for open feedback), `true` allows anything.
   if (schema === false) return void out.push(`${at}: not allowed`);
   if (schema === true) return;
   const s = resolve(schema);

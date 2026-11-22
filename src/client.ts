@@ -6,14 +6,17 @@ declare const __UR_VERSION__: string; // injected from package.json by vite.conf
 export const VERSION: string = __UR_VERSION__;
 export const RETRY_DELAY_MS = 1000;
 
-export type FeedbackType = 'thumbs' | 'csat' | 'ces';
+/** Rating types carry a score; `open` is free text with no score. */
+export type RatingType = 'thumbs' | 'csat' | 'ces';
+export type FeedbackType = RatingType | 'open';
 export type Meta = Record<string, string>;
 export type ErrorCode = 'invalid-attribute' | 'invalid-meta' | 'network' | 'http' | 'internal';
 
 export interface FeedbackPayload {
   id: string;
   type: FeedbackType;
-  score: number;
+  /** Ratings only; never sent for `open`. */
+  score?: number;
   surface: string;
   subject?: string;
   meta?: Meta;
@@ -29,13 +32,17 @@ export interface ImpressionPayload {
   client?: string;
 }
 
-export interface SendFeedbackOptions extends Omit<FeedbackPayload, 'id' | 'client'> {
+interface SendCommon extends Omit<FeedbackPayload, 'id' | 'client' | 'type' | 'score' | 'comment'> {
   projectKey: string;
   /** Re-use an id to update an earlier item (server upserts). Generated when omitted. */
   id?: string;
   /** API base URL. Required until the hosted API launches. */
   endpoint?: string;
 }
+
+/** A rating with a score and optional comment, or open feedback: a comment and no score. */
+export type SendFeedbackOptions = SendCommon &
+  ({ type: RatingType; score: number; comment?: string } | { type: 'open'; score?: never; comment: string });
 
 /** Error raised by the transport. `code` matches the element's `user-reactions:error` codes. */
 export class ReactionsError extends Error {
@@ -110,10 +117,13 @@ export async function post(endpoint: string | undefined, path: string, projectKe
 
 /**
  * Send one feedback item without rendering the element (native apps, servers, chat hosts).
- * Same payload and endpoint as the element. Resolves with the item id; rejects with ReactionsError.
+ * Same payload and endpoint as the element. `open` sends no score and needs a comment. Resolves with the item id; rejects with ReactionsError.
  */
 export async function sendFeedback(options: SendFeedbackOptions): Promise<{ id: string }> {
-  const { projectKey, endpoint, id = uuid(), type, score, surface, subject, meta, comment, locale } = options;
+  const { projectKey, endpoint, id = uuid(), type, surface, subject, meta, comment, locale } = options;
+  const open = type == 'open';
+  if (open && !comment?.trim()) throw new ReactionsError('invalid-attribute', 'comment is required for type "open"');
+  const score = open ? undefined : options.score;
   const payload: FeedbackPayload = clean({ id, type, score, surface, subject, meta, comment, locale, client: `headless@${VERSION}` });
   await post(endpoint, '/v1/feedback', projectKey, payload);
   return { id };
