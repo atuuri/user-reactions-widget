@@ -2,6 +2,8 @@
 
 All notable changes to `@user-reactions/widget`. Versions follow [Semantic Versioning](https://semver.org/).
 
+## Unreleased
+
 ## 0.1.0
 
 First stable release; npm `latest` and ranges such as `@0.1` now resolve to it.
