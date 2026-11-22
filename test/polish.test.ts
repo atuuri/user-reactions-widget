@@ -267,7 +267,8 @@ describe('after a final failed send', () => {
 
 describe('styling', () => {
   const css = () => mount().sr.querySelector('style')!.textContent!;
-  const NO_PREF = /@media \(prefers-reduced-motion:no-preference\)\{((?:[^{}]*\{[^{}]*\})*)\}/;
+  // The media block holds rules and @keyframes (one more level of braces).
+  const NO_PREF = /@media \(prefers-reduced-motion:no-preference\)\{((?:[^{}]*\{(?:[^{}]*\{[^{}]*\})*[^{}]*\})*)\}/;
 
   it('reduced motion: transitions and animations only under prefers-reduced-motion: no-preference', () => {
     mockFetch();

@@ -1,4 +1,4 @@
-# M4: Suggestions (planned, 0.2.0)
+# M4: Suggestions (planned, 0.3.0)
 
 Read only when working on M4. Everything not stated here works as in [widget.md](widget.md).
 
@@ -29,7 +29,7 @@ Read only when working on M4. Everything not stated here works as in [widget.md]
 2. **Impression**: as for ratings, with `type: "suggestion"`.
 3. **Open**: the toggle shows a textarea (max 2000 chars) and Send, sets `aria-expanded="true"` and focuses the textarea. Toggle again or Escape closes it, keeps the text and returns focus to the toggle.
 4. **Send**: `POST /v1/feedback` with a new `id`, `type: "suggestion"`, `comment`, and `surface`, `subject`, `meta`, `locale`, `client` as for ratings. No `score`. Empty Send does nothing.
-5. **Thanks**: after the API accepts it, the box closes and "Thanks for your suggestion" is announced (`role="status"`). The toggle stays; each new suggestion gets a new `id`.
+5. **Thanks**: after the API accepts it, the box closes and "Thanks for your suggestion" (or the `thanks` attribute) is announced (`role="status"`). `after-send` applies as for ratings (widget.md behaviour 6): with `replace` (default) the toggle is replaced by the thanks text; with `keep` the toggle stays and each new suggestion gets a new `id`.
 6. **Failure**: same retry rule. On final failure fire `error`, keep the box open with the text, no thanks.
 7. **Attribute changes**: changing `subject` or `meta` resets the element.
 

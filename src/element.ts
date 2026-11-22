@@ -78,7 +78,8 @@ const CSS =
   `form{display:flex;flex-direction:column;align-items:flex-start;gap:var(--ur-gap,.5em);margin-top:var(--ur-gap,.5em);max-width:36em}` +
   `form[hidden]{display:none}textarea{${LINE};border-radius:min(var(--ur-radius,6px),12px);box-sizing:border-box;width:100%;min-height:4.5em;padding:.5em;resize:vertical}` +
   `textarea::placeholder{color:inherit;opacity:.7}` +
-  `@media (prefers-reduced-motion:no-preference){button{transition:border-color .15s,box-shadow .15s,color .15s}}`;
+  `[part=thanks]:focus{outline:none}` +
+  `@media (prefers-reduced-motion:no-preference){button{transition:border-color .15s,box-shadow .15s,color .15s}.d{animation:f .25s}@keyframes f{from{opacity:0}}}`;
 
 // Lets `import "user-reactions"` succeed outside a browser (Node, SSR) for the headless client.
 const Base = (typeof HTMLElement == 'undefined' ? class {} : HTMLElement) as typeof HTMLElement;
@@ -124,6 +125,31 @@ export class UserReactionsElement extends Base {
 
   private attr(name: string) {
     return this.getAttribute(name)?.trim() || undefined;
+  }
+
+  /** `after-send="keep"` keeps the buttons after thanks; anything else replaces the element. Read when feedback is final. */
+  private keep() {
+    return this.attr('after-send') == 'keep';
+  }
+
+  /** The `thanks` attribute, shown as given, else the built-in string. */
+  private thx() {
+    return this.attr('thanks') || this.c!.s.thanks;
+  }
+
+  /** Feedback is final: only the thanks text stays, and focus follows it if it was inside the element. */
+  private replace() {
+    const sr = this.sr!;
+    const focused = sr.activeElement;
+    this.done = true;
+    for (const n of sr.querySelectorAll('[part=question],.g,form')) n.remove();
+    const t = this.$('[part=thanks]');
+    t.textContent = this.thx();
+    t.parentElement!.classList.add('d');
+    if (focused) {
+      t.tabIndex = -1;
+      t.focus();
+    }
   }
 
   private guard(fn: () => void) {
@@ -285,7 +311,11 @@ export class UserReactionsElement extends Base {
     const run = () =>
       post(this.attr('endpoint'), '/v1/feedback', this.attr('project-key') || '', payload).then(
         () => {
-          if (g == this.gen) this.failed = false;
+          if (g == this.gen) {
+            this.failed = false;
+            // A rating with no comment box is final once accepted, unless a newer click is queued.
+            if (!comment && !this.done && this.q === p && this.$('form').hidden && !this.keep()) this.replace();
+          }
           return true;
         },
         (e) => {
@@ -315,7 +345,7 @@ export class UserReactionsElement extends Base {
     }
     const ask = c.mode == 'optional' || (c.mode == 'on-negative' && score <= NEG[c.type]);
     this.$('form').hidden = !ask;
-    this.$('[part=thanks]').textContent = ask ? '' : c.s.thanks;
+    this.$('[part=thanks]').textContent = ask ? '' : this.thx();
     this.emit<RatedDetail>('rated', { id: this.fid, type: c.type, score, surface: c.surface, subject: c.subject });
     this.send();
   }
@@ -325,19 +355,23 @@ export class UserReactionsElement extends Base {
     const ta = this.$<HTMLTextAreaElement>('textarea');
     const btn = this.$<HTMLButtonElement>('[part=send]');
     const comment = ta.value.trim().slice(0, 2000);
-    if (comment) {
+    const keep = this.keep();
+    if (comment || !keep) {
       const g = this.gen;
       btn.disabled = true;
-      const ok = await this.send(comment);
+      // An empty Send is final once the rating is accepted, so it waits for the latest rating request.
+      const ok = await (comment ? this.send(comment) : this.q);
       btn.disabled = false;
-      if (!ok || g != this.gen) return; // error already fired, or the element was reset; keep the text so the user can retry
+      if (!ok || g != this.gen || this.done) return; // error already fired, or the element was reset; keep the text so the user can retry
       this.done = true;
       for (const b of this.buttons()) b.setAttribute('aria-disabled', 'true');
     }
-    const hadFocus = this.sr!.activeElement;
-    this.$('form').hidden = true;
-    this.$('[part=thanks]').textContent = this.c!.s.thanks;
-    if (hadFocus) this.$('[aria-pressed=true]').focus();
+    if (keep) {
+      const hadFocus = this.sr!.activeElement;
+      this.$('form').hidden = true;
+      this.$('[part=thanks]').textContent = this.thx();
+      if (hadFocus) this.$('[aria-pressed=true]').focus();
+    } else this.replace();
     if (comment) this.emit<CommentedDetail>('commented', { id: this.fid, comment });
   }
 }

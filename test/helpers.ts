@@ -80,7 +80,7 @@ export interface Mounted {
   thanks: () => HTMLElement;
 }
 
-export const BASE = { 'project-key': 'pk_test_123', type: 'thumbs', surface: 'assistant-answer', endpoint: 'https://api.test' };
+export const BASE = { 'project-key': 'pk_test_123', type: 'thumbs', surface: 'assistant-answer', endpoint: 'https://api.test', 'after-send': 'keep' };
 
 /** Creates <user-reactions> with attributes, appends it and records its events from `document`. */
 export function mount(attrs: Record<string, string | null> = {}): Mounted {
